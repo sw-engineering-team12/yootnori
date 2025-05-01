@@ -21,6 +21,84 @@ public class Game {
     private boolean hasExtraTurn;
     private List<String> gameLog;
 
+    // Game.java 클래스 내에 추가
+    /**
+     * 디버깅용: 특정 위치의 말 정보 출력
+     */
+    public void debugPrintPlaceInfo(Place place) {
+        if (place == null) {
+            addToGameLog("[디버그] 위치 객체가 null입니다.");
+            return;
+        }
+
+        addToGameLog("=== [디버그] 위치 정보 ===");
+        addToGameLog("위치 ID: " + place.getId());
+        addToGameLog("위치 이름: " + place.getName());
+        addToGameLog("분기점 여부: " + place.isJunction());
+        addToGameLog("중앙점 여부: " + place.isCenter());
+        addToGameLog("시작점 여부: " + place.isStartingPoint());
+        addToGameLog("도착점 여부: " + place.isEndingPoint());
+
+        List<Piece> pieces = place.getPieces();
+        addToGameLog("말 개수: " + pieces.size());
+
+        if (!pieces.isEmpty()) {
+            addToGameLog("--- 말 목록 ---");
+            for (int i = 0; i < pieces.size(); i++) {
+                Piece piece = pieces.get(i);
+                addToGameLog((i+1) + ". ID: " + piece.getId() +
+                        ", 플레이어: " + piece.getPlayer().getName() +
+                        ", 업힌 말 수: " + piece.getStackedPieces().size());
+
+                // 업힌 말이 있으면 자세히 출력
+                if (!piece.getStackedPieces().isEmpty()) {
+                    addToGameLog("   업힌 말 목록:");
+                    for (Piece stackedPiece : piece.getStackedPieces()) {
+                        addToGameLog("    - " + stackedPiece.getId() +
+                                " (소유자: " + stackedPiece.getPlayer().getName() + ")");
+                    }
+                }
+            }
+        }
+        addToGameLog("===============");
+    }
+
+    /**
+     * 디버깅용: 플레이어의 모든 말 상태 출력
+     */
+    public void debugPrintPlayerPieces(Player player) {
+        if (player == null) {
+            addToGameLog("[디버그] 플레이어 객체가 null입니다.");
+            return;
+        }
+
+        addToGameLog("=== [디버그] " + player.getName() + "의 말 상태 ===");
+        List<Piece> pieces = player.getPieces();
+        addToGameLog("총 말 개수: " + pieces.size());
+
+        for (Piece piece : pieces) {
+            Place currentPlace = piece.getCurrentPlace();
+            String locationInfo = currentPlace != null ?
+                    (currentPlace.getId() + " (" + currentPlace.getName() + ")") :
+                    "보드에 없음 (업힌 상태 또는 초기 상태)";
+
+            addToGameLog("말 " + piece.getId() + ":");
+            addToGameLog("  위치: " + locationInfo);
+            addToGameLog("  완주 여부: " + piece.isCompleted());
+            addToGameLog("  업힌 말 수: " + piece.getStackedPieces().size());
+
+            // 업힌 말이 있으면 자세히 출력
+            if (!piece.getStackedPieces().isEmpty()) {
+                addToGameLog("  업힌 말 목록:");
+                for (Piece stackedPiece : piece.getStackedPieces()) {
+                    addToGameLog("    - " + stackedPiece.getId());
+                }
+            }
+            addToGameLog("-----------");
+        }
+        addToGameLog("===================");
+    }
+
     /**
      * 기본 생성자
      */
@@ -79,6 +157,7 @@ public class Game {
     /**
      * 다음 턴으로 전환
      */
+// Game.java의 nextTurn 메소드 수정
     public void nextTurn() {
         if (!hasExtraTurn) {
             currentTurnIndex = (currentTurnIndex + 1) % players.size();
@@ -86,6 +165,12 @@ public class Game {
         } else {
             hasExtraTurn = false;
             addToGameLog(getCurrentPlayer().getName() + "의 추가 턴입니다.");
+        }
+
+        // 디버깅: 턴 시작 시 모든 플레이어의 말 상태 출력
+        addToGameLog("[디버그] === 턴 시작 시 게임 상태 ===");
+        for (Player player : players) {
+            debugPrintPlayerPieces(player);
         }
     }
 
@@ -152,6 +237,7 @@ public class Game {
      * @param result 윷 결과
      * @return 이동 후 위치
      */
+// Game.java의 movePiece 메소드 수정
     public Place movePiece(Piece piece, Yut.YutResult result) {
         // 현재 위치 (시작점이거나 이미 보드에 있는 경우)
         Place currentPlace = piece.getCurrentPlace();
@@ -160,26 +246,37 @@ public class Game {
             currentPlace = board.getStartingPlace();
         }
 
+        // 디버깅: 이동 전 상태 출력
+        addToGameLog("[디버그] === 이동 전 상태 ===");
+//        debugPrintPlaceInfo(currentPlace);
+//        debugPrintPlayerPieces(piece.getPlayer());
+
         // 목적지 계산
         Place destination = board.calculateDestination(currentPlace, result);
+//        addToGameLog("[디버그] 계산된 목적지: " + destination.getId() + " (" + destination.getName() + ")");
 
         // 이동 실행
         piece.moveTo(destination);
 
         // 이동 로그 추가
-        addToGameLog(getCurrentPlayer().getName() + "의 말 " + piece.getId() +
-                "이(가) " + (currentPlace.getName() != null ? currentPlace.getName() : "시작점") +
-                "에서 " + (destination.getName() != null ? destination.getName() : "도착점") +
-                "으로 이동했습니다.");
+//        addToGameLog(getCurrentPlayer().getName() + "의 말 " + piece.getId() +
+//                "이(가) " + (currentPlace.getName() != null ? currentPlace.getName() : "시작점") +
+//                "에서 " + (destination.getName() != null ? destination.getName() : "도착점") +
+//                "으로 이동했습니다.");
 
         // 업힌 말이 있는 경우 함께 이동
-        if (!piece.getStackedPieces().isEmpty()) {
-            addToGameLog("업힌 말 " + piece.getStackedPieces().size() + "개가 함께 이동했습니다.");
-        }
+//        if (!piece.getStackedPieces().isEmpty()) {
+//            addToGameLog("업힌 말 " + piece.getStackedPieces().size() + "개가 함께 이동했습니다.");
+//        }
+
+        // 디버깅: 이동 후 상태 출력
+//        addToGameLog("[디버그] === 이동 후 상태 ===");
+//        debugPrintPlaceInfo(destination);
+//        debugPrintPlayerPieces(piece.getPlayer());
 
         // 도착 위치에서 상대방 말 잡기 확인
         if (isCapture(destination)) {
-            addToGameLog("도착 위치에 상대방 말이 있습니다. 잡기를 시도합니다.");
+//            addToGameLog("도착 위치에 상대방 말이 있습니다. 잡기를 시도합니다.");
             applyCapture(piece);
         }
         // 도착 위치에서 같은 플레이어 말 업기 확인
@@ -207,16 +304,27 @@ public class Game {
      * @param capturingPiece 잡는 말
      * @return 잡기 성공 여부
      */
+// Game.java의 applyCapture 메소드 수정
     public boolean applyCapture(Piece capturingPiece) {
         Place currentPlace = capturingPiece.getCurrentPlace();
         if (currentPlace == null) {
+            addToGameLog("[디버그] 잡기 실패: 현재 말의 위치가 null입니다.");
             return false;
         }
 
-        Player currentPlayer = getCurrentPlayer();
-        List<Piece> opponentPieces = currentPlace.getOpponentPieces(currentPlayer);
+        // 중요한 변경: 현재 턴이 아닌 말의 소유자를 기준으로 함
+        Player capturingPlayer = capturingPiece.getPlayer();
+
+        // 해당 위치에서 잡는 말의 소유자가 아닌 다른 플레이어의 말들을 가져옴
+        List<Piece> opponentPieces = new ArrayList<>();
+        for (Piece piece : currentPlace.getPieces()) {
+            if (!piece.getPlayer().equals(capturingPlayer) && !piece.equals(capturingPiece)) {
+                opponentPieces.add(piece);
+            }
+        }
 
         if (opponentPieces.isEmpty()) {
+            addToGameLog("[디버그] 잡기 실패: 상대방 말이 없습니다.");
             return false;
         }
 
@@ -224,11 +332,17 @@ public class Game {
         for (Piece opponentPiece : opponentPieces) {
             Player opponentPlayer = opponentPiece.getPlayer();
 
+            // 디버깅: 잡히는 말 정보 출력
+            addToGameLog("[디버그] 잡히는 말 정보:");
+            addToGameLog("말 ID: " + opponentPiece.getId());
+            addToGameLog("소유자: " + opponentPlayer.getName());
+            addToGameLog("업힌 말 개수: " + opponentPiece.getStackedPieces().size());
+
             // 업힌 말 목록을 복사 (ConcurrentModificationException 방지)
             List<Piece> stackedPieces = new ArrayList<>(opponentPiece.getStackedPieces());
 
             // 로그에 잡기 기록
-            addToGameLog(currentPlayer.getName() + "의 말 " + capturingPiece.getId() +
+            addToGameLog(capturingPlayer.getName() + "의 말 " + capturingPiece.getId() +
                     "이(가) " + opponentPlayer.getName() + "의 말 " +
                     opponentPiece.getId() + "을(를) 잡았습니다.");
 
@@ -242,6 +356,10 @@ public class Game {
                 }
             }
 
+            // 현재 위치에서 말 제거 확인
+            boolean removed = currentPlace.removePiece(opponentPiece);
+            addToGameLog("[디버그] 말이 현재 위치에서 제거되었는지: " + removed);
+
             // 시작점으로 돌아가기 전에 그룹화 해제
             opponentPiece.unstackAllPieces();
 
@@ -249,12 +367,25 @@ public class Game {
             opponentPiece.moveTo(board.getStartingPlace());
         }
 
-        // 잡기 후 추가 턴 부여
-        hasExtraTurn = true;
-        addToGameLog(currentPlayer.getName() + "에게 추가 턴이 부여되었습니다. (잡기)");
+        // 디버깅: 잡기 후 상태 출력
+        addToGameLog("[디버그] === 잡기 후 상태 ===");
+        debugPrintPlaceInfo(currentPlace);
+        debugPrintPlaceInfo(board.getStartingPlace());
+
+        // 잡기 후 추가 턴 부여 - 현재 턴 플레이어에게만 추가 턴 부여
+        Player currentPlayer = getCurrentPlayer();
+        if (capturingPlayer.equals(currentPlayer)) {
+            hasExtraTurn = true;
+            addToGameLog(currentPlayer.getName() + "에게 추가 턴이 부여되었습니다. (잡기)");
+        } else {
+            addToGameLog("[디버그] 현재 턴 플레이어(" + currentPlayer.getName() +
+                    ")가 아닌 " + capturingPlayer.getName() +
+                    "의 말이 상대를 잡았지만, 추가 턴은 부여되지 않습니다.");
+        }
 
         return true;
     }
+
     /**
      * 같은 플레이어의 말 업기
      * @param piece1 기준 말
@@ -262,6 +393,16 @@ public class Game {
      * @return 업기 성공 여부
      */
     public boolean applyGrouping(Piece piece1, Piece piece2) {
+        // 디버깅: 업기 전 상태 출력
+        addToGameLog("[디버그] === 업기 전 상태 ===");
+        addToGameLog("업는 말: " + piece1.getId() + ", 업히는 말: " + piece2.getId());
+
+        if (piece1.getCurrentPlace() != null) {
+            debugPrintPlaceInfo(piece1.getCurrentPlace());
+        } else {
+            addToGameLog("[디버그] 업는 말의 현재 위치가 null입니다.");
+        }
+
         // 같은 플레이어의 말인지 확인
         if (!piece1.getPlayer().equals(piece2.getPlayer())) {
             addToGameLog("업기 실패: 서로 다른 플레이어의 말입니다.");
@@ -272,31 +413,55 @@ public class Game {
         Place place1 = piece1.getCurrentPlace();
         Place place2 = piece2.getCurrentPlace();
 
-        if (place1 == null || place2 == null) {
-            addToGameLog("업기 실패: 말 중 하나가 보드 위에 없습니다.");
+        if (place1 == null) {
+            addToGameLog("[디버그] 업기 실패: 업는 말이 보드 위에 없습니다.");
+            return false;
+        }
+
+        if (place2 == null) {
+            addToGameLog("[디버그] 업기 실패: 업히는 말이 보드 위에 없습니다. (이미 업힌 상태일 수 있음)");
             return false;
         }
 
         if (!place1.equals(place2)) {
-            addToGameLog("업기 실패: 두 말이 서로 다른 위치에 있습니다.");
+            addToGameLog("[디버그] 업기 실패: 두 말이 서로 다른 위치에 있습니다. place1: " +
+                    place1.getId() + ", place2: " + place2.getId());
             return false;
         }
 
-        // 업기 실행
-        piece1.stackPiece(piece2);
-
-        addToGameLog(piece1.getPlayer().getName() + "의 말 " + piece1.getId() +
-                "이(가) " + piece2.getId() + "을(를) 업었습니다.");
-
-        // 업기 후 place2에서 piece2가 제거되었는지 확인
-        if (place2.getPieces().contains(piece2)) {
-            // 문제가 있는 경우 로그 추가 및 수동으로 제거
-            addToGameLog("경고: 업기 후에도 말이 보드에 남아있습니다. 수동으로 제거합니다.");
-            place2.removePiece(piece2);
+        // 업기 전 말 목록 출력
+        addToGameLog("[디버그] 업기 전 위치에 있는 말 목록:");
+        for (Piece p : place1.getPieces()) {
+            addToGameLog("- " + p.getId() + " (소유자: " + p.getPlayer().getName() + ")");
         }
+
+        // 업기 실행
+        boolean stackResult = piece1.stackPiece(piece2);
+
+        if (stackResult) {
+            addToGameLog(piece1.getPlayer().getName() + "의 말 " + piece1.getId() +
+                    "이(가) " + piece2.getId() + "을(를) 업었습니다.");
+        } else {
+            addToGameLog("업기 실패: stackPiece 메서드가 false를 반환했습니다.");
+            return false;
+        }
+
+        // 업기 후 위치에 있는 말 목록 출력
+        addToGameLog("[디버그] 업기 후 위치에 있는 말 목록:");
+        for (Piece p : place1.getPieces()) {
+            addToGameLog("- " + p.getId() + " (소유자: " + p.getPlayer().getName() + ")");
+        }
+
+        // 디버깅: 업기 후 상태 출력
+        addToGameLog("[디버그] === 업기 후 상태 ===");
+        if (piece1.getCurrentPlace() != null) {
+            debugPrintPlaceInfo(piece1.getCurrentPlace());
+        }
+        addToGameLog("[디버그] 업는 말 " + piece1.getId() + "에 업힌 말 개수: " + piece1.getStackedPieces().size());
 
         return true;
     }
+
     /**
      * 현재 위치에서 같은 플레이어의 모든 말 업기 확인 및 처리
      * @param place 현재 위치
@@ -308,23 +473,24 @@ public class Game {
         }
 
         Player currentPlayer = currentPiece.getPlayer();
-        List<Piece> piecesAtPlace = place.getPieces();
+        List<Piece> piecesAtPlace = new ArrayList<>(place.getPieces());
 
-        // 이미 같은 플레이어의 말이 이 위치에 있는지 확인
-        for (Piece otherPiece : piecesAtPlace) {
-            // 자기 자신이 아니고, 같은 플레이어의 말이면 업기
-            if (!otherPiece.equals(currentPiece) && otherPiece.getPlayer().equals(currentPlayer)) {
-                // 로그에 업기 시도 기록
-                addToGameLog(currentPlayer.getName() + "의 말 " + currentPiece.getId() +
-                        "이(가) 같은 위치의 말 " + otherPiece.getId() + "을(를) 업기 시도합니다.");
+        // 현재 위치에 같은 플레이어의 말이 있는지 확인
+        List<Piece> samePlayerPieces = new ArrayList<>();
+        for (Piece p : piecesAtPlace) {
+            if (p.getPlayer().equals(currentPlayer) && !p.equals(currentPiece)) {
+                samePlayerPieces.add(p);
+            }
+        }
 
-                // 업기 적용 (현재 이동한 말에 기존 말을 업음)
-                boolean groupingResult = applyGrouping(currentPiece, otherPiece);
-
-                if (groupingResult) {
-                    addToGameLog("업기 성공: " + currentPiece.getId() + "에 " + otherPiece.getId() + "이(가) 업혔습니다.");
-                } else {
-                    addToGameLog("업기 실패: 조건이 맞지 않습니다.");
+        // 같은 위치에 같은 플레이어의 말이 있으면 처리
+        if (!samePlayerPieces.isEmpty()) {
+            // 이동한 말이 다른 말들을 업음 (테스트 의도)
+            for (Piece otherPiece : samePlayerPieces) {
+                boolean result = applyGrouping(currentPiece, otherPiece);
+                if (result) {
+                    addToGameLog(currentPlayer.getName() + "의 말 " + currentPiece.getId() +
+                            "이(가) " + otherPiece.getId() + "을(를) 업었습니다.");
                 }
             }
         }
