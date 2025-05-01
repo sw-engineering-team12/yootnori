@@ -63,10 +63,6 @@ public class Board {
         startingPlace = start;
         endingPlace = end; // 시작점과 동일
 
-        Place center1 = createPlace("C_1", "중앙1", true, true, false, false);
-        Place center2 = createPlace("C_2", "중앙2", true, true, false, false);
-        centerPlaces.put(center1.getId(),center1);
-        centerPlaces.put(center2.getId(),center2);
 
         // 외곽 경로 생성 (인덱스 1~19 사용)
         Place[] outerPath = new Place[20];
@@ -87,6 +83,12 @@ public class Board {
         outerPath[5].setJunction(true);
         outerPath[10].setJunction(true);
         outerPath[15].setJunction(true);
+
+
+        Place center1 = createPlace("C_1", "중앙1", true, true, false, false);
+        Place center2 = createPlace("C_2", "중앙2", true, true, false, false);
+        centerPlaces.put(center1.getId(),center1);
+        centerPlaces.put(center2.getId(),center2);
 
 
         //05에서 들어가는 경로 (C1,C2)
@@ -112,7 +114,7 @@ public class Board {
         C5.setNextPlace(C6);
         C6.setNextPlace(outerPath[15]);
 
-        outerPath[10].setNextPlace(C3);
+        outerPath[10].setSpecialNextPlace(C3);
         C3.setNextPlace(C4);
         C4.setNextPlace(center2);
         center2.setNextPlace(C7);
@@ -207,7 +209,7 @@ public class Board {
         centerPlaces.put(center2.getId(),center2);
 
         // 외곽 경로 생성 (인덱스 1~15 사용)
-        Place[] outerPath = new Place[25];
+        Place[] outerPath = new Place[30];
         for (int i = 1; i < 30; i++) {
             String id = String.valueOf(i);
             String name = "외곽" + (i + 1);
