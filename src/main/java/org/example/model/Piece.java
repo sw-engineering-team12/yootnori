@@ -7,7 +7,6 @@ public class Piece {
     private String id;
     private Player player;
     private Boolean isComplete;
-    private Boolean isOwnhand;
     private Place currentPlace;
     private ArrayList<Piece> stackPieces;
 
@@ -16,7 +15,6 @@ public class Piece {
         this.id = id;
         this.player = player;
         this.isComplete = false;
-        this.isOwnhand = true;
         this.stackPieces = new ArrayList<Piece>();
     }
 
@@ -39,6 +37,10 @@ public class Piece {
             // 도착점에 도달했는지 확인
             if (newPlace.isEndingPoint()) {
                 this.isComplete = true;
+                // 업힌 말들도 함께 완주 처리
+                for (Piece stackedPiece : stackPieces) {
+                    stackedPiece.isComplete = true;
+                }
             }
         }
         return true;
@@ -82,6 +84,7 @@ public class Piece {
     }
 
     // 업힌 말 모두 해제
+// 업힌 말 모두 해제
     public void unstackAllPieces() {
         if (!stackPieces.isEmpty()) {
             // 현재 위치가 있을 경우에만 업힌 말들을 해당 위치로 이동
@@ -93,10 +96,10 @@ public class Piece {
                     // 현재 말과 같은 위치로 이동
                     piece.moveTo(currentPlace);
                 }
-
-                // 업힌 말 목록 초기화
-                stackPieces.clear();
             }
+
+            // 업힌 말 목록 명시적으로 초기화 - 이 부분 추가
+            stackPieces.clear();
         }
     }
 
@@ -142,6 +145,10 @@ public class Piece {
 
         Piece other = (Piece) obj;
         return id.equals(other.id) && player.equals(other.player);
+    }
+    // Piece.java에 추가
+    public void clearStackedPieces() {
+        stackPieces.clear();
     }
 
     @Override

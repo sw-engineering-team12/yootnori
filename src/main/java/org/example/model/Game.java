@@ -237,7 +237,6 @@ public class Game {
      * @param result 윷 결과
      * @return 이동 후 위치
      */
-// Game.java의 movePiece 메소드 수정
     public Place movePiece(Piece piece, Yut.YutResult result) {
         // 현재 위치 (시작점이거나 이미 보드에 있는 경우)
         Place currentPlace = piece.getCurrentPlace();
@@ -246,46 +245,92 @@ public class Game {
             currentPlace = board.getStartingPlace();
         }
 
-        // 디버깅: 이동 전 상태 출력
-        addToGameLog("[디버그] === 이동 전 상태 ===");
-//        debugPrintPlaceInfo(currentPlace);
-//        debugPrintPlayerPieces(piece.getPlayer());
-
         // 목적지 계산
         Place destination = board.calculateDestination(currentPlace, result);
-//        addToGameLog("[디버그] 계산된 목적지: " + destination.getId() + " (" + destination.getName() + ")");
 
         // 이동 실행
         piece.moveTo(destination);
 
         // 이동 로그 추가
-//        addToGameLog(getCurrentPlayer().getName() + "의 말 " + piece.getId() +
-//                "이(가) " + (currentPlace.getName() != null ? currentPlace.getName() : "시작점") +
-//                "에서 " + (destination.getName() != null ? destination.getName() : "도착점") +
-//                "으로 이동했습니다.");
+        addToGameLog(getCurrentPlayer().getName() + "의 말 " + piece.getId() +
+                "이(가) " + (currentPlace.getName() != null ? currentPlace.getName() : "시작점") +
+                "에서 " + (destination.getName() != null ? destination.getName() : "도착점") +
+                "으로 이동했습니다.");
 
-        // 업힌 말이 있는 경우 함께 이동
-//        if (!piece.getStackedPieces().isEmpty()) {
-//            addToGameLog("업힌 말 " + piece.getStackedPieces().size() + "개가 함께 이동했습니다.");
-//        }
-
-        // 디버깅: 이동 후 상태 출력
-//        addToGameLog("[디버그] === 이동 후 상태 ===");
-//        debugPrintPlaceInfo(destination);
-//        debugPrintPlayerPieces(piece.getPlayer());
-
-        // 도착 위치에서 상대방 말 잡기 확인
-        if (isCapture(destination)) {
-//            addToGameLog("도착 위치에 상대방 말이 있습니다. 잡기를 시도합니다.");
+        // 중심점 특별 처리
+        if (destination.isCenter()) {
+            // 중심점 잡기 확인
+            boolean captured = checkCenterCapture(piece);
+            if (!captured) {
+                // 잡기가 발생하지 않았으면 업기 확인
+                checkCenterStacking(piece);
+            }
+        }
+        // 일반적인 잡기 확인
+        else if (isCapture(destination)) {
             applyCapture(piece);
         }
-        // 도착 위치에서 같은 플레이어 말 업기 확인
+        // 업기 확인
         else {
             checkAndApplyGrouping(destination, piece);
         }
 
         return destination;
     }
+    /**
+     * 중심점 간의 업기를 처리하는 메서드
+     * @param piece 현재 이동한 말
+     * @return 업기가 발생했으면 true, 아니면 false
+     */
+    public boolean checkCenterStacking(Piece piece) {
+        Player player = piece.getPlayer();
+        Place currentPlace = piece.getCurrentPlace();
+
+        // 현재 위치가 중심점이 아니면 처리하지 않음
+        if (currentPlace == null || !currentPlace.isCenter()) {
+            return false;
+        }
+
+        // 모든 중심점 가져오기
+        Map<String, Place> centerPlaces = board.getCenterPlaces();
+
+        // 다른 중심점에 있는 같은 플레이어의 말 찾기
+        List<Piece> samePiecesToStack = new ArrayList<>();
+
+        for (Place centerPlace : centerPlaces.values()) {
+            // 현재 위치가 아닌 다른 중심점
+            if (!centerPlace.equals(currentPlace)) {
+                // 해당 중심점에 있는 모든 말 확인
+                for (Piece otherPiece : centerPlace.getPieces()) {
+                    // 같은 플레이어의 말인 경우
+                    if (otherPiece.getPlayer().equals(player) && !otherPiece.equals(piece)) {
+                        samePiecesToStack.add(otherPiece);
+                    }
+                }
+            }
+        }
+
+        // 같은 플레이어의 말이 없으면 처리하지 않음
+        if (samePiecesToStack.isEmpty()) {
+            return false;
+        }
+
+        // 같은 플레이어의 말이 있으면 업기 실행
+        boolean stackingOccurred = false;
+
+        for (Piece otherPiece : samePiecesToStack) {
+            // 말 업기 실행
+            boolean result = piece.stackPiece(otherPiece);
+            if (result) {
+                stackingOccurred = true;
+                addToGameLog(player.getName() + "의 말 " + piece.getId() +
+                        "이(가) 다른 중심점에 있던 " + otherPiece.getId() + "을(를) 업었습니다.");
+            }
+        }
+
+        return stackingOccurred;
+    }
+
     /**
      * 말이 다른 플레이어의 말을 잡을 수 있는지 확인
      * @param place 위치
@@ -304,7 +349,6 @@ public class Game {
      * @param capturingPiece 잡는 말
      * @return 잡기 성공 여부
      */
-// Game.java의 applyCapture 메소드 수정
     public boolean applyCapture(Piece capturingPiece) {
         Place currentPlace = capturingPiece.getCurrentPlace();
         if (currentPlace == null) {
@@ -350,9 +394,15 @@ public class Game {
             if (!stackedPieces.isEmpty()) {
                 addToGameLog("업힌 말 " + stackedPieces.size() + "개도 함께 시작점으로 돌아갑니다.");
 
-                // 그룹화 해제 전에 업힌 말들을 정확히 로깅
+                // 각 업힌 말을 직접 처리
                 for (Piece stackedPiece : stackedPieces) {
                     addToGameLog("업힌 말 " + stackedPiece.getId() + "이(가) 시작점으로 돌아갑니다.");
+
+                    // 먼저 업힌 말을 스택에서 제거
+                    opponentPiece.getStackedPieces().remove(stackedPiece);
+
+                    // 업힌 말을 시작점으로 이동
+                    stackedPiece.moveTo(board.getStartingPlace());
                 }
             }
 
@@ -360,11 +410,9 @@ public class Game {
             boolean removed = currentPlace.removePiece(opponentPiece);
             addToGameLog("[디버그] 말이 현재 위치에서 제거되었는지: " + removed);
 
-            // 시작점으로 돌아가기 전에 그룹화 해제
-            opponentPiece.unstackAllPieces();
-
             // 메인 말 시작점으로 이동 (실제 보드의 시작 위치로)
             opponentPiece.moveTo(board.getStartingPlace());
+            opponentPiece.clearStackedPieces();
         }
 
         // 디버깅: 잡기 후 상태 출력
@@ -385,7 +433,6 @@ public class Game {
 
         return true;
     }
-
     /**
      * 같은 플레이어의 말 업기
      * @param piece1 기준 말
@@ -496,6 +543,76 @@ public class Game {
         }
     }
     /**
+     * 중심점 간의 잡기를 처리하는 메서드
+     * @param piece 현재 이동한 말
+     * @return 잡기가 발생했으면 true, 아니면 false
+     */
+    public boolean checkCenterCapture(Piece piece) {
+        Player currentPlayer = piece.getPlayer();
+        Place currentPlace = piece.getCurrentPlace();
+
+        // 현재 위치가 중심점이 아니면 처리하지 않음
+        if (currentPlace == null || !currentPlace.isCenter()) {
+            return false;
+        }
+
+        // 모든 중심점 가져오기
+        Map<String, Place> centerPlaces = board.getCenterPlaces();
+
+        // 다른 중심점에 있는 상대방 말 찾기
+        List<Piece> opponentPiecesToCapture = new ArrayList<>();
+
+        for (Place centerPlace : centerPlaces.values()) {
+            // 현재 위치가 아닌 다른 중심점
+            if (!centerPlace.equals(currentPlace)) {
+                // 해당 중심점에 있는 모든 말 확인
+                for (Piece otherPiece : centerPlace.getPieces()) {
+                    // 상대방 말인 경우 (자신의 말이 아닌 경우)
+                    if (!otherPiece.getPlayer().equals(currentPlayer)) {
+                        opponentPiecesToCapture.add(otherPiece);
+                    }
+                }
+            }
+        }
+
+        // 상대방 말이 없으면 처리하지 않음
+        if (opponentPiecesToCapture.isEmpty()) {
+            return false;
+        }
+
+        // 상대방 말이 있으면 잡기 실행
+        for (Piece opponentPiece : opponentPiecesToCapture) {
+            // 로그 기록
+            addToGameLog(currentPlayer.getName() + "의 말 " + piece.getId() +
+                    "이(가) 중심점에서 " + opponentPiece.getPlayer().getName() +
+                    "의 말 " + opponentPiece.getId() + "을(를) 잡았습니다.");
+
+            // 업힌 말 처리
+            if (!opponentPiece.getStackedPieces().isEmpty()) {
+                addToGameLog("업힌 말 " + opponentPiece.getStackedPieces().size() +
+                        "개도 함께 시작점으로 돌아갑니다.");
+            }
+
+            // 말을 현재 위치에서 제거
+            Place opponentPlace = opponentPiece.getCurrentPlace();
+            if (opponentPlace != null) {
+                opponentPlace.removePiece(opponentPiece);
+            }
+
+            // 업힌 말 해제
+            opponentPiece.unstackAllPieces();
+
+            // 시작점으로 이동
+            opponentPiece.moveTo(board.getStartingPlace());
+        }
+
+        // 현재 턴 플레이어에게 추가 턴 부여
+        hasExtraTurn = true;
+        addToGameLog(currentPlayer.getName() + "에게 추가 턴이 부여되었습니다. (중심점 잡기)");
+
+        return true;
+    }
+    /**
      * 플레이어의 모든 말이 완주했는지 확인 (승리 조건)
      * @param player 확인할 플레이어
      * @return 승리 여부
@@ -545,6 +662,8 @@ public class Game {
         }
         addToGameLog("게임이 재시작되었습니다.");
     }
+
+
 
     /**
      * 게임 로그에 메시지 추가
