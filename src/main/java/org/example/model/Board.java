@@ -15,6 +15,7 @@ public class Board {
     private Place startingPlace; // 시작 위치
     private Place endingPlace; // 도착 위치
     private Map<String,Place> centerPlaces; // 중앙 위치
+    private Place beyondEndPlace; // E를 넘어가는 히든 위치
 
     /**
      * 보드 타입 열거형
@@ -59,11 +60,12 @@ public class Board {
     private void initializeSquareBoard() {
         // 시작/도착 지점 생성
         Place start = createPlace("S", "시작점", false, false, true, false);
-        Place end = createPlace("E", "종료점", false, false, false, true);
+        Place end = createPlace("E", "종료점", false, false, false, false);
+        Place beyondEnd = createPlace("FE", "최종 도착", false, false, false, true);
+
         startingPlace = start;
-        endingPlace = end; // 시작점과 동일
-
-
+        endingPlace = beyondEnd; // 시작점과 동일
+        end.setNextPlace(beyondEnd);
         // 외곽 경로 생성 (인덱스 1~19 사용)
         Place[] outerPath = new Place[20];
         for (int i = 1; i < 20; i++) {
@@ -131,9 +133,12 @@ public class Board {
     private void initializePentagonBoard(){
         // 시작/도착 지점 생성
         Place start = createPlace("S", "시작점", false, false, true, false);
-        Place end = createPlace("E", "종료점", false, false, false, true);
+        Place end = createPlace("E", "종료점", false, false, false, false);
+        Place beyondEnd = createPlace("FE", "최종 도착", false, false, false, true);
+
         startingPlace = start;
-        endingPlace = end; // 시작점과 동일
+        endingPlace = beyondEnd; // 시작점과 동일
+        end.setNextPlace(beyondEnd);
 
         // 외곽 경로 생성 (인덱스 1~15 사용)
         Place[] outerPath = new Place[25];
@@ -199,9 +204,12 @@ public class Board {
      */
     private void initializeHexagonBoard(){
         Place start = createPlace("S", "시작점", false, false, true, false);
-        Place end = createPlace("E", "종료점", false, false, false, true);
+        Place end = createPlace("E", "종료점", false, false, false, false);
+        Place beyondEnd = createPlace("FE", "최종 도착", false, false, false, true);
+
         startingPlace = start;
-        endingPlace = end; // 시작점과 동일
+        endingPlace = beyondEnd; // 시작점과 동일
+        end.setNextPlace(beyondEnd);
 
         Place center1 = createPlace("C_1", "중앙1", true, true, false, false);
         Place center2 = createPlace("C_2", "중앙2", true, true, false, false);

@@ -35,9 +35,9 @@ public class Piece {
 
             // 도착점에 도달했는지 확인 메서드 필요
             // 도착점에 도달했는지 확인
-//            if (newPlace.isEndingPoint()) {
-//                this.isComplete = true;
-//            }
+            if (newPlace.isEndingPoint()) {
+                this.isComplete = true;
+            }
         }
         return true;
     }
