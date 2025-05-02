@@ -37,6 +37,10 @@ public class Piece {
             // 도착점에 도달했는지 확인
             if (newPlace.isEndingPoint()) {
                 this.isComplete = true;
+                // 업힌 말들도 함께 완주 처리
+                for (Piece stackedPiece : stackPieces) {
+                    stackedPiece.isComplete = true;
+                }
             }
         }
         return true;
