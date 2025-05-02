@@ -17,6 +17,7 @@ public class Place {
 
     private Place nextPlace;            // 기본 다음 위치
     private Place specialNextPlace;     // 특별 다음 위치(대각선 등)
+    private Place previousPlace;  // 이전 위치 참조 추가
 
     private List<Piece> pieces;         // 현재 이 위치에 있는 말들
 
@@ -71,6 +72,7 @@ public class Place {
             pieces.add(piece);
         }
     }
+
 
     /**
      * 말을 이 위치에서 제거
@@ -246,6 +248,14 @@ public class Place {
         return specialNextPlace != null;
     }
 
+    public Place getPreviousPlace() {
+        return previousPlace;
+    }
+
+    public void setPreviousPlace(Place previousPlace) {
+        this.previousPlace = previousPlace;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -253,6 +263,7 @@ public class Place {
         Place place = (Place) o;
         return Objects.equals(id, place.id);
     }
+
 
     @Override
     public int hashCode() {

@@ -53,6 +53,7 @@ public class SquareBoardPathTest {
             expectedPath.add(String.valueOf(i));
         }
         expectedPath.add("E");
+        expectedPath.add("FE");
 
         // 경로 검증
         assertEquals("외곽 경로 순회가 올바르지 않습니다", expectedPath, pathIds);

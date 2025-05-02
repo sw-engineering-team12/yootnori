@@ -64,8 +64,10 @@ public class Board {
         Place beyondEnd = createPlace("FE", "최종 도착", false, false, false, true);
 
         startingPlace = start;
-        endingPlace = beyondEnd; // 시작점과 동일
+        endingPlace = beyondEnd; // 최종 도착
         end.setNextPlace(beyondEnd);
+        beyondEnd.setPreviousPlace(end); // 역방향 참조 설정
+
         // 외곽 경로 생성 (인덱스 1~19 사용)
         Place[] outerPath = new Place[20];
         for (int i = 1; i < 20; i++) {
@@ -74,34 +76,35 @@ public class Board {
             outerPath[i] = createPlace(id, name);
         }
 
-        // 외곽 경로 연결
+        // 외곽 경로 연결 및 역방향 참조 설정
         for (int i = 1; i < 19; i++) {
             outerPath[i].setNextPlace(outerPath[i + 1]);
+            outerPath[i + 1].setPreviousPlace(outerPath[i]); // 역방향 참조 설정
         }
-        outerPath[19].setNextPlace(end); // 마지막 위치는 시작점으로 연결
-        start.setNextPlace(outerPath[1]);
+        outerPath[19].setNextPlace(end);
+        end.setPreviousPlace(outerPath[19]); // 역방향 참조 설정
 
+        start.setNextPlace(outerPath[1]);
+        outerPath[1].setPreviousPlace(start); // 역방향 참조 설정
 
         outerPath[5].setJunction(true);
         outerPath[10].setJunction(true);
         outerPath[15].setJunction(true);
 
-
         Place center1 = createPlace("C_1", "중앙1", true, true, false, false);
         Place center2 = createPlace("C_2", "중앙2", true, true, false, false);
-        centerPlaces.put(center1.getId(),center1);
-        centerPlaces.put(center2.getId(),center2);
+        centerPlaces.put(center1.getId(), center1);
+        centerPlaces.put(center2.getId(), center2);
 
-
-        //05에서 들어가는 경로 (C1,C2)
+        // 05에서 들어가는 경로 (C1,C2)
         Place C1 = createPlace("C1", "C1");
         Place C2 = createPlace("C2", "C2");
 
-        //10에서 들어가는 경로 (C3,C4)
+        // 10에서 들어가는 경로 (C3,C4)
         Place C3 = createPlace("C3", "C3");
         Place C4 = createPlace("C4", "C4");
 
-        //05에서 나가는 경로 (C5,C6)
+        // 05에서 나가는 경로 (C5,C6)
         Place C5 = createPlace("C5", "C5");
         Place C6 = createPlace("C6", "C6");
 
@@ -109,38 +112,63 @@ public class Board {
         Place C7 = createPlace("C7", "C7");
         Place C8 = createPlace("C8", "C8");
 
+        // 특별 경로 연결 및 역방향 참조 설정
         outerPath[5].setSpecialNextPlace(C1);
+        C1.setPreviousPlace(outerPath[5]); // 역방향 참조 설정
+
         C1.setNextPlace(C2);
+        C2.setPreviousPlace(C1); // 역방향 참조 설정
+
         C2.setNextPlace(center1);
+        center1.setPreviousPlace(C2); // 역방향 참조 설정
+
         center1.setNextPlace(C5);
+        C5.setPreviousPlace(center1); // 역방향 참조 설정
+
         C5.setNextPlace(C6);
+        C6.setPreviousPlace(C5); // 역방향 참조 설정
+
         C6.setNextPlace(outerPath[15]);
+        outerPath[15].setPreviousPlace(C6); // 특별 경로에서 나갈 때의 역방향 참조 설정
 
         outerPath[10].setSpecialNextPlace(C3);
+        C3.setPreviousPlace(outerPath[10]); // 역방향 참조 설정
+
         C3.setNextPlace(C4);
+        C4.setPreviousPlace(C3); // 역방향 참조 설정
+
         C4.setNextPlace(center2);
+        center2.setPreviousPlace(C4); // 역방향 참조 설정
+
         center2.setNextPlace(C7);
+        C7.setPreviousPlace(center2); // 역방향 참조 설정
+
         C7.setNextPlace(C8);
+        C8.setPreviousPlace(C7); // 역방향 참조 설정
+
         C8.setNextPlace(end);
+        // end는 이미 역방향 참조가 설정되어 있음
 
         center1.setSpecialNextPlace(C7);
-
+        C7.setPreviousPlace(center1); // 특별 경로의 역방향 참조 설정
     }
+
     /**
      * 오각형 보드 초기화 메서드
      * 오각형 구조의 윷놀이판을 생성합니다.
      */
-    private void initializePentagonBoard(){
+    private void initializePentagonBoard() {
         // 시작/도착 지점 생성
         Place start = createPlace("S", "시작점", false, false, true, false);
         Place end = createPlace("E", "종료점", false, false, false, false);
         Place beyondEnd = createPlace("FE", "최종 도착", false, false, false, true);
 
         startingPlace = start;
-        endingPlace = beyondEnd; // 시작점과 동일
+        endingPlace = beyondEnd; // 최종 도착
         end.setNextPlace(beyondEnd);
+        beyondEnd.setPreviousPlace(end); // 역방향 참조 설정
 
-        // 외곽 경로 생성 (인덱스 1~15 사용)
+        // 외곽 경로 생성 (인덱스 1~24 사용)
         Place[] outerPath = new Place[25];
         for (int i = 1; i < 25; i++) {
             String id = String.valueOf(i);
@@ -148,18 +176,22 @@ public class Board {
             outerPath[i] = createPlace(id, name);
         }
 
-        // 외곽 경로 연결
+        // 외곽 경로 연결 및 역방향 참조 설정
         for (int i = 1; i < 24; i++) {
             outerPath[i].setNextPlace(outerPath[i + 1]);
+            outerPath[i + 1].setPreviousPlace(outerPath[i]); // 역방향 참조 설정
         }
-        outerPath[24].setNextPlace(end); // 마지막 위치는 시작점으로 연결
+        outerPath[24].setNextPlace(end);
+        end.setPreviousPlace(outerPath[24]); // 역방향 참조 설정
+
         start.setNextPlace(outerPath[1]);
+        outerPath[1].setPreviousPlace(start); // 역방향 참조 설정
 
         // 중앙 지점 생성
         Place center1 = createPlace("C_1", "중앙1", true, true, false, false);
         Place center2 = createPlace("C_2", "중앙2", true, true, false, false);
-        centerPlaces.put(center1.getId(),center1);
-        centerPlaces.put(center2.getId(),center2);
+        centerPlaces.put(center1.getId(), center1);
+        centerPlaces.put(center2.getId(), center2);
 
         Place C1 = createPlace("C1", "C1");
         Place C2 = createPlace("C2", "C2");
@@ -172,51 +204,80 @@ public class Board {
         Place C9 = createPlace("C9", "C9");
         Place C10 = createPlace("C10", "C10");
 
-
         outerPath[5].setJunction(true);
         outerPath[10].setJunction(true);
         outerPath[15].setJunction(true);
 
+        // 특별 경로 연결 및 역방향 참조 설정
         outerPath[5].setSpecialNextPlace(C1);
+        C1.setPreviousPlace(outerPath[5]); // 역방향 참조 설정
+
         outerPath[10].setSpecialNextPlace(C3);
+        C3.setPreviousPlace(outerPath[10]); // 역방향 참조 설정
+
         outerPath[15].setSpecialNextPlace(C5);
+        C5.setPreviousPlace(outerPath[15]); // 역방향 참조 설정
 
         C1.setNextPlace(C2);
+        C2.setPreviousPlace(C1); // 역방향 참조 설정
+
         C2.setNextPlace(center1);
+        center1.setPreviousPlace(C2); // 역방향 참조 설정
+
         center1.setNextPlace(C7);
+        C7.setPreviousPlace(center1); // 역방향 참조 설정
+
         C7.setNextPlace(C8);
+        C8.setPreviousPlace(C7); // 역방향 참조 설정
+
         C8.setNextPlace(outerPath[20]);
+        outerPath[20].setPreviousPlace(C8); // 역방향 참조 설정
 
         C3.setNextPlace(C4);
+        C4.setPreviousPlace(C3); // 역방향 참조 설정
+
         C4.setNextPlace(center1);
+        // center1은 이미 역방향 참조가 설정됨
 
         center1.setSpecialNextPlace(C9);
+        C9.setPreviousPlace(center1); // 역방향 참조 설정
+
         C9.setNextPlace(C10);
+        C10.setPreviousPlace(C9); // 역방향 참조 설정
+
         C10.setNextPlace(end);
+        // end는 이미 역방향 참조가 설정됨
 
         C5.setNextPlace(C6);
+        C6.setPreviousPlace(C5); // 역방향 참조 설정
+
         C6.setNextPlace(center2);
+        center2.setPreviousPlace(C6); // 역방향 참조 설정
+
         center2.setNextPlace(C9);
+        // C9은 이미 역방향 참조가 설정됨
     }
+
     /**
      * 육각형 보드 초기화 메서드
      * 육각형 구조의 윷놀이판을 생성합니다.
      */
-    private void initializeHexagonBoard(){
+    private void initializeHexagonBoard() {
         Place start = createPlace("S", "시작점", false, false, true, false);
         Place end = createPlace("E", "종료점", false, false, false, false);
         Place beyondEnd = createPlace("FE", "최종 도착", false, false, false, true);
 
         startingPlace = start;
-        endingPlace = beyondEnd; // 시작점과 동일
+        endingPlace = beyondEnd; // 최종 도착
         end.setNextPlace(beyondEnd);
+        beyondEnd.setPreviousPlace(end); // 역방향 참조 설정
 
         Place center1 = createPlace("C_1", "중앙1", true, true, false, false);
         Place center2 = createPlace("C_2", "중앙2", true, true, false, false);
-        centerPlaces.put(center1.getId(),center1);
-        centerPlaces.put(center2.getId(),center2);
+        centerPlaces.put(center1.getId(), center1);
+        centerPlaces.put(center2.getId(), center2);
 
-        // 외곽 경로 생성 (인덱스 1~15 사용)
+        // 외곽 경로 생성 (인덱스 1~29 사용)
         Place[] outerPath = new Place[30];
         for (int i = 1; i < 30; i++) {
             String id = String.valueOf(i);
@@ -224,13 +285,16 @@ public class Board {
             outerPath[i] = createPlace(id, name);
         }
 
-        // 외곽 경로 연결
+        // 외곽 경로 연결 및 역방향 참조 설정
         for (int i = 1; i < 29; i++) {
             outerPath[i].setNextPlace(outerPath[i + 1]);
+            outerPath[i + 1].setPreviousPlace(outerPath[i]); // 역방향 참조 설정
         }
-        outerPath[29].setNextPlace(end); // 마지막 위치는 시작점으로 연결
-        start.setNextPlace(outerPath[1]);
+        outerPath[29].setNextPlace(end);
+        end.setPreviousPlace(outerPath[29]); // 역방향 참조 설정
 
+        start.setNextPlace(outerPath[1]);
+        outerPath[1].setPreviousPlace(start); // 역방향 참조 설정
 
         Place C1 = createPlace("C1", "C1");
         Place C2 = createPlace("C2", "C2");
@@ -250,31 +314,65 @@ public class Board {
         outerPath[15].setJunction(true);
         outerPath[20].setJunction(true);
 
+        // 특별 경로 연결 및 역방향 참조 설정
         outerPath[5].setSpecialNextPlace(C1);
+        C1.setPreviousPlace(outerPath[5]); // 역방향 참조 설정
+
         outerPath[10].setSpecialNextPlace(C3);
+        C3.setPreviousPlace(outerPath[10]); // 역방향 참조 설정
+
         outerPath[15].setSpecialNextPlace(C5);
+        C5.setPreviousPlace(outerPath[15]); // 역방향 참조 설정
+
         outerPath[20].setSpecialNextPlace(C7);
+        C7.setPreviousPlace(outerPath[20]); // 역방향 참조 설정
+
         C1.setNextPlace(C2);
+        C2.setPreviousPlace(C1); // 역방향 참조 설정
+
         C2.setNextPlace(center1);
+        center1.setPreviousPlace(C2); // 역방향 참조 설정
+
         center1.setNextPlace(C9);
+        C9.setPreviousPlace(center1); // 역방향 참조 설정
+
         C9.setNextPlace(C10);
+        C10.setPreviousPlace(C9); // 역방향 참조 설정
+
         C10.setNextPlace(outerPath[20]);
+        outerPath[20].setPreviousPlace(C10); // 역방향 참조 설정
 
         C3.setNextPlace(C4);
+        C4.setPreviousPlace(C3); // 역방향 참조 설정
+
         C4.setNextPlace(center1);
+        // center1은 이미 역방향 참조가 설정됨
 
         C5.setNextPlace(C6);
+        C6.setPreviousPlace(C5); // 역방향 참조 설정
+
         C6.setNextPlace(center1);
+        // center1은 이미 역방향 참조가 설정됨
 
         C7.setNextPlace(C8);
+        C8.setPreviousPlace(C7); // 역방향 참조 설정
+
         C8.setNextPlace(center2);
+        center2.setPreviousPlace(C8); // 역방향 참조 설정
 
         center1.setSpecialNextPlace(C11);
+        C11.setPreviousPlace(center1); // 역방향 참조 설정
+
         C11.setNextPlace(C12);
+        C12.setPreviousPlace(C11); // 역방향 참조 설정
+
         C12.setNextPlace(end);
+        // end는 이미 역방향 참조가 설정됨
 
         center2.setNextPlace(C11);
+        // C11은 이미 역방향 참조가 설정됨
     }
+
     /**
      * 위치 생성 및 맵에 추가하는 유틸리티 메서드
      */
@@ -352,14 +450,17 @@ public class Board {
         // 이동 칸수 가져오기
         int moveCount = yutResult.getMoveCount();
 
-        // 빽도 케이스 처리
-// 빽도 처리 완전히 구현
+        // 빽도 케이스 처리 개선
         if (moveCount < 0) {
-            if (currentPlace.isStartingPoint()) {
-                return currentPlace; // 시작점에서는 빽도가 적용되지 않음
+            // 시작점이나 최종 도착점(FE)에서는 빽도가 적용되지 않음
+            if (currentPlace.isStartingPoint() || currentPlace.isEndingPoint()) {
+                return currentPlace;
             }
-            if (currentPlace.isEndingPoint()) {
-                // 보드 타입에 따라 적절한 위치 반환
+
+            // 도착점(E)에서는 보드 타입에 따라 적절한 위치로
+            if (currentPlace.getId().equals("E")) {
+                // previousPlace 참조를 사용하면 이 분기는 필요 없을 수 있음
+                // 호환성을 위해 유지
                 switch (boardType) {
                     case SQUARE:
                         return getPlaceById("19");
@@ -367,10 +468,19 @@ public class Board {
                         return getPlaceById("24");
                     case HEXAGON:
                         return getPlaceById("29");
+                    default:
+                        return currentPlace; // 기본값
                 }
             }
 
-            return getPlaceById(String.valueOf(Integer.parseInt(currentPlace.getId()) - 1));
+            // 이제 previousPlace를 사용해 이전 위치로 이동
+            if (currentPlace.getPreviousPlace() != null) {
+                return currentPlace.getPreviousPlace();
+            } else {
+                // 이전 위치 참조가 없는 경우 ID 기반 대체 (하위 호환성)
+                // 이 부분은 모든 위치에 previousPlace가 설정된 경우 필요 없음
+                return getPlaceById(String.valueOf(Integer.parseInt(currentPlace.getId()) - 1));
+            }
         }
 
         // 현재 위치가 null이면 시작점에서 시작
@@ -385,8 +495,8 @@ public class Board {
             // 1.1. 분기점에서는 첫 이동을 특별 경로로
             currentPos = currentPos.getSpecialNextPlace();
             moveCount--; // 이동 횟수 감소
-
         }
+
         // 1.2. 남은 이동을 기본 경로로 처리
         for (int i = 0; i < moveCount; i++) {
             if (currentPos.getNextPlace() != null) {
