@@ -574,4 +574,93 @@ public class GameTest {
         // 승자는 첫 번째 플레이어여야 함 (먼저 완주)
         assertEquals(firstPlayer, game.getWinner(), "순서상 먼저 완주한 플레이어가 승자여야 함");
     }
+
+    /**
+     * 업힌 말 잡기 테스트
+     * 플레이어 1의 1번 말이 2번 말에 업힌 상태에서
+     * 플레이어 2의 말이 플레이어 1의 2번 말을 잡을 때
+     * 플레이어 1의 1번 말과 2번 말 모두 잡히는지 확인
+     */
+    @Test
+    void testCaptureStackedPieces() {
+        // 게임 설정 및 초기화
+        GameSettings settings = new GameSettings();
+        settings.setPlayerCount(2);
+        settings.setPiecePerPlayer(3);
+        settings.setBoardType(Board.BoardType.SQUARE);
+
+        Game game = new Game();
+        game.initialize(settings);
+
+        // 플레이어 가져오기
+        Player player1 = game.getPlayers().get(0);
+        Player player2 = game.getPlayers().get(1);
+
+        // 플레이어 1의 말 가져오기
+        Piece player1Piece1 = player1.getPieces().get(0); // 1번 말
+        Piece player1Piece2 = player1.getPieces().get(1); // 2번 말
+
+        // 플레이어 2의 말 가져오기
+        Piece player2Piece = player2.getPieces().get(0);
+
+        // 테스트를 위해 플레이어 1의 말들을 보드 위의 특정 위치(예: 5번 위치)로 이동
+        Place position5 = game.getBoard().getPlaceById("5");
+        player1Piece1.moveTo(position5);
+        player1Piece2.moveTo(position5);
+
+        // 로그 출력: 초기 상태 확인
+        System.out.println("=== 초기 상태 ===");
+        System.out.println("플레이어 1의 1번 말 위치: " + player1Piece1.getCurrentPlace().getId());
+        System.out.println("플레이어 1의 2번 말 위치: " + player1Piece2.getCurrentPlace().getId());
+
+        // 플레이어 1의 2번 말에 1번 말을 업함
+        boolean stackingResult = player1Piece2.stackPiece(player1Piece1);
+        assertTrue(stackingResult, "말 업기가 성공해야 함");
+
+        // 로그 출력: 업은 후 상태 확인
+        System.out.println("=== 업은 후 상태 ===");
+        System.out.println("플레이어 1의 2번 말에 업힌 말 수: " + player1Piece2.getStackedPieces().size());
+        System.out.println("플레이어 1의 1번 말이 업혀있는지: " + player1Piece2.getStackedPieces().contains(player1Piece1));
+        System.out.println("플레이어 1의 1번 말 위치: " + (player1Piece1.getCurrentPlace() == null ? "보드에 없음(업힌 상태)" : player1Piece1.getCurrentPlace().getId()));
+        System.out.println("위치 5에 있는 말 수: " + position5.getPieces().size());
+
+        // 위치 5에 있는 말이 플레이어 1의 2번 말만 있는지 확인
+        assertTrue(position5.getPieces().size() == 1 && position5.getPieces().contains(player1Piece2),
+                "위치 5에 플레이어 1의 2번 말만 있어야 함");
+
+        // 플레이어 2의 말이 위치 5로 이동하도록 설정 (잡기 상황 만들기)
+        // 현재 턴이 플레이어 2의 턴이어야 함
+        if (game.getCurrentPlayer() != player2) {
+            game.nextTurn(); // 플레이어 2의 턴으로 설정
+        }
+
+        // 플레이어 2의 말을 위치 5로 이동 (잡기 발생)
+        game.movePiece(player2Piece, Yut.YutResult.MO); // 5칸 이동하여 위치 5에 도달
+
+        // 로그 출력: 잡은 후 상태 확인
+        System.out.println("=== 잡은 후 상태 ===");
+        System.out.println("플레이어 1의 2번 말 위치: " + (player1Piece2.getCurrentPlace() == null ? "보드에 없음" : player1Piece2.getCurrentPlace().getId()));
+        System.out.println("플레이어 1의 1번 말 위치: " + (player1Piece1.getCurrentPlace() == null ? "보드에 없음" : player1Piece1.getCurrentPlace().getId()));
+        System.out.println("플레이어 2의 말 위치: " + player2Piece.getCurrentPlace().getId());
+
+        // 시작점에 플레이어 1의 두 말이 모두 있는지 확인
+        Place startingPlace = game.getBoard().getStartingPlace();
+
+        assertTrue(player1Piece2.getCurrentPlace() != null &&
+                                player1Piece2.getCurrentPlace().equals(startingPlace),
+                "플레이어 1의 2번 말이 시작점으로 돌아와야 함");
+
+        assertTrue(player1Piece1.getCurrentPlace() != null &&
+                                player1Piece1.getCurrentPlace().equals(startingPlace),
+                "플레이어 1의 1번 말이 시작점으로 돌아와야 함");
+
+
+        // 업힌 상태가 해제되었는지 확인
+        assertTrue(player1Piece2.getStackedPieces().isEmpty(),
+                "플레이어 1의 2번 말의 업힌 말 목록이 비어있어야 함");
+
+        // 추가 턴이 부여되었는지 확인
+        assertTrue(game.hasExtraTurn(), "잡기 후 추가 턴이 부여되어야 함");
+    }
+
 }

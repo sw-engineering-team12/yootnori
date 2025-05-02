@@ -304,7 +304,6 @@ public class Game {
      * @param capturingPiece 잡는 말
      * @return 잡기 성공 여부
      */
-// Game.java의 applyCapture 메소드 수정
     public boolean applyCapture(Piece capturingPiece) {
         Place currentPlace = capturingPiece.getCurrentPlace();
         if (currentPlace == null) {
@@ -350,9 +349,15 @@ public class Game {
             if (!stackedPieces.isEmpty()) {
                 addToGameLog("업힌 말 " + stackedPieces.size() + "개도 함께 시작점으로 돌아갑니다.");
 
-                // 그룹화 해제 전에 업힌 말들을 정확히 로깅
+                // 각 업힌 말을 직접 처리
                 for (Piece stackedPiece : stackedPieces) {
                     addToGameLog("업힌 말 " + stackedPiece.getId() + "이(가) 시작점으로 돌아갑니다.");
+
+                    // 먼저 업힌 말을 스택에서 제거
+                    opponentPiece.getStackedPieces().remove(stackedPiece);
+
+                    // 업힌 말을 시작점으로 이동
+                    stackedPiece.moveTo(board.getStartingPlace());
                 }
             }
 
@@ -360,11 +365,9 @@ public class Game {
             boolean removed = currentPlace.removePiece(opponentPiece);
             addToGameLog("[디버그] 말이 현재 위치에서 제거되었는지: " + removed);
 
-            // 시작점으로 돌아가기 전에 그룹화 해제
-            opponentPiece.unstackAllPieces();
-
             // 메인 말 시작점으로 이동 (실제 보드의 시작 위치로)
             opponentPiece.moveTo(board.getStartingPlace());
+            opponentPiece.clearStackedPieces();
         }
 
         // 디버깅: 잡기 후 상태 출력
@@ -385,7 +388,6 @@ public class Game {
 
         return true;
     }
-
     /**
      * 같은 플레이어의 말 업기
      * @param piece1 기준 말
