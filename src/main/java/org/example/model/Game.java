@@ -179,6 +179,9 @@ public class Game {
      * @return 윷 결과
      */
     public Yut.YutResult throwYut() {
+        // 이전 턴의 추가 턴 플래그 초기화
+        hasExtraTurn = false;
+        
         lastYutResult = yut.throwYut();
         addToGameLog(getCurrentPlayer().getName() + "이(가) 윷을 던져 " +
                 lastYutResult.getName() + "(" + lastYutResult.getMoveCount() + "칸)가 나왔습니다.");
@@ -198,8 +201,10 @@ public class Game {
      * @return 지정된 윷 결과
      */
     public Yut.YutResult setSpecificYutResult(Yut.YutResult result) {
-        lastYutResult = result;
+        // 이전 턴의 추가 턴 플래그 초기화
         hasExtraTurn = false;
+        
+        lastYutResult = result;
         addToGameLog(getCurrentPlayer().getName() + "이(가) " +
                 result.getName() + "(" + result.getMoveCount() + "칸)로 지정했습니다.");
 
@@ -645,9 +650,9 @@ public class Game {
         if (!hasExtraTurn) {
             nextTurn();
         } else {
-            // 추가 턴이 있으면 hasExtraTurn은 false로 설정하지 않고, 다음 턴 시작 시 처리 >> 이 부분 재확인필요
+            // 추가 턴이 있으면 다음 턴 시작 시 처리
             addToGameLog(getCurrentPlayer().getName() + "의 추가 턴이 시작됩니다.");
-            hasExtraTurn = false; // 추가 턴은 한 번만!
+            // hasExtraTurn은 다음 윷을 던질 때 초기화됨
         }
     }
 
