@@ -645,8 +645,9 @@ public class Game {
         if (!hasExtraTurn) {
             nextTurn();
         } else {
-            // 추가 턴이 있으면 hasExtraTurn은 false로 설정하지 않고, 다음 턴 시작 시 처리
+            // 추가 턴이 있으면 hasExtraTurn은 false로 설정하지 않고, 다음 턴 시작 시 처리 >> 이 부분 재확인필요
             addToGameLog(getCurrentPlayer().getName() + "의 추가 턴이 시작됩니다.");
+            hasExtraTurn = false; // 추가 턴은 한 번만!
         }
     }
 
