@@ -339,8 +339,8 @@ public class Board {
         C9.setNextPlace(C10);
         C10.setPreviousPlace(C9); // 역방향 참조 설정
 
-        C10.setNextPlace(outerPath[20]);
-        outerPath[20].setPreviousPlace(C10); // 역방향 참조 설정
+        C10.setNextPlace(outerPath[25]);
+        outerPath[25].setPreviousPlace(C10); // 역방향 참조 설정
 
         C3.setNextPlace(C4);
         C4.setPreviousPlace(C3); // 역방향 참조 설정
