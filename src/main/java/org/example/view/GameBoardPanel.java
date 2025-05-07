@@ -171,6 +171,10 @@ public class GameBoardPanel extends JPanel {
         // 중앙 노드
         int centerX = x + (size / 2);
         int centerY = y + (size / 2);
+        // C_2 노드를 먼저 그리고
+        drawNode(g2d, centerX, centerY, "C_2", board);
+        placePositions.put("C_2", new Point(centerX, centerY));
+        // 그 다음 C_1 노드를 그립니다
         drawNode(g2d, centerX, centerY, "C_1", board);
         placePositions.put("C_1", new Point(centerX, centerY));
 
@@ -180,7 +184,6 @@ public class GameBoardPanel extends JPanel {
         int s5x = x + size, s5y = y; // 5
         int s10x = x + size, s10y = y + size; // 10
         int s15x = x, s15y = y + size; // 15
-        // int sex = x + size, sey = y + size; // E
 
         // 대각선 경로: 각 모서리~중앙 1/3, 2/3 지점에 C노드 배치
         // S~C_1: C8, C7
@@ -393,7 +396,7 @@ public class GameBoardPanel extends JPanel {
         g2d.setColor(Color.WHITE);
         g2d.fillOval(x - (nodeSize / 2), y - (nodeSize / 2), nodeSize, nodeSize);
         g2d.setColor(Color.BLACK);
-        g2d.setStroke(new BasicStroke(3)); // 더 두꺼운 테두리
+        g2d.setStroke(new BasicStroke(3)); // 더 두껍운 테두리
         g2d.drawOval(x - (nodeSize / 2), y - (nodeSize / 2), nodeSize, nodeSize);
         g2d.setStroke(new BasicStroke(2)); // 원래대로 복원
         // 노드 ID 표시
@@ -450,6 +453,33 @@ public class GameBoardPanel extends JPanel {
                         g2d.setColor(Color.WHITE);
                         g2d.drawString(String.valueOf(stackCount + 1),
                                 point.x - 4, point.y + 4);
+                    }
+
+                    // C_2 노드에 말이 있을 경우 C_1 노드에도 같은 말 표시
+                    if (place.getId().equals("C_2")) {
+                        Point c1Point = placePositions.get("C_1");
+                        if (c1Point != null) {
+                            // 현재 플레이어의 말은 테두리 강조
+                            if (player.equals(game.getCurrentPlayer())) {
+                                g2d.setColor(Color.BLACK);
+                                g2d.fillOval(c1Point.x - (PIECE_SIZE / 2) - 2,
+                                        c1Point.y - (PIECE_SIZE / 2) - 2,
+                                        PIECE_SIZE + 4, PIECE_SIZE + 4);
+                            }
+
+                            // 말 그리기
+                            g2d.setColor(color);
+                            g2d.fillOval(c1Point.x - (PIECE_SIZE / 2),
+                                    c1Point.y - (PIECE_SIZE / 2),
+                                    PIECE_SIZE, PIECE_SIZE);
+
+                            // 업힌 말이 있으면 숫자 표시
+                            if (stackCount > 0) {
+                                g2d.setColor(Color.WHITE);
+                                g2d.drawString(String.valueOf(stackCount + 1),
+                                        c1Point.x - 4, c1Point.y + 4);
+                            }
+                        }
                     }
                 }
             }
