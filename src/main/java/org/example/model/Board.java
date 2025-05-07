@@ -72,7 +72,7 @@ public class Board {
         Place[] outerPath = new Place[20];
         for (int i = 1; i < 20; i++) {
             String id = String.valueOf(i);
-            String name = "외곽" + (i + 1);
+            String name = "외곽" + i;
             outerPath[i] = createPlace(id, name);
         }
 
@@ -172,7 +172,7 @@ public class Board {
         Place[] outerPath = new Place[25];
         for (int i = 1; i < 25; i++) {
             String id = String.valueOf(i);
-            String name = "외곽" + (i + 1);
+            String name = "외곽" + i;
             outerPath[i] = createPlace(id, name);
         }
 
@@ -281,7 +281,7 @@ public class Board {
         Place[] outerPath = new Place[30];
         for (int i = 1; i < 30; i++) {
             String id = String.valueOf(i);
-            String name = "외곽" + (i + 1);
+            String name = "외곽" + i;
             outerPath[i] = createPlace(id, name);
         }
 
