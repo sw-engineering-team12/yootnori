@@ -71,7 +71,7 @@ public class Piece {
      * 이 말을 업고 있는 말 설정
      * @param carrier 업는 말
      */
-    private void setCarriedBy(Piece carrier) {
+    void setCarriedBy(Piece carrier) {
         this.carriedBy = carrier;
     }
 

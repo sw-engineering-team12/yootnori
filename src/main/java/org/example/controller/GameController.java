@@ -5,6 +5,7 @@ import org.example.view.GameBoardPanel;
 import org.example.view.GameFrame;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -104,9 +105,20 @@ public class GameController {
      */
     public List<Piece> getMovablePieces() {
         if (game.getLastYutResult() == null) {
-            return null;
+            return new ArrayList<>();
         }
-        return game.getMovablePieces(game.getCurrentPlayer(), game.getLastYutResult());
+
+        List<Piece> allPieces = game.getMovablePieces(game.getCurrentPlayer(), game.getLastYutResult());
+        List<Piece> validMovablePieces = new ArrayList<>();
+
+        // 업혀있지 않은 말만 반환
+        for (Piece piece : allPieces) {
+            if (!piece.isCarried()) {
+                validMovablePieces.add(piece);
+            }
+        }
+
+        return validMovablePieces;
     }
 
     /**
