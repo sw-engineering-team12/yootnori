@@ -20,6 +20,11 @@ public class Game {
     private Yut.YutResult lastYutResult;
     private boolean hasExtraTurn;
     private List<String> gameLog;
+    private List<Yut.YutResult> pendingYutResults;
+    // 상대방 말을 잡아서 얻은 추가 턴이 사용되었는지 여부
+    private boolean captureExtraTurnUsed;
+    // 각 윷 결과가 기본 턴에서 온 것인지 추가 턴에서 온 것인지 추적
+    private boolean isExtraTurnThrow;
 
     // Game.java 클래스 내에 추가
     /**
@@ -109,6 +114,9 @@ public class Game {
         this.isGameFinished = false;
         this.hasExtraTurn = false;
         this.gameLog = new ArrayList<>();
+        this.pendingYutResults = new ArrayList<>();
+        this.captureExtraTurnUsed = false;
+        this.isExtraTurnThrow = false;
     }
 
     /**
@@ -122,6 +130,9 @@ public class Game {
         this.winner = null;
         this.hasExtraTurn = false;
         this.gameLog.clear();
+        this.pendingYutResults.clear();
+        this.captureExtraTurnUsed = false;
+        this.isExtraTurnThrow = false;
 
         // 보드 초기화
         this.board = new Board(settings.getBoardType());
@@ -157,13 +168,13 @@ public class Game {
     /**
      * 다음 턴으로 전환
      */
-// Game.java의 nextTurn 메소드 수정
     public void nextTurn() {
         if (!hasExtraTurn) {
             currentTurnIndex = (currentTurnIndex + 1) % players.size();
             addToGameLog(getCurrentPlayer().getName() + "의 턴입니다.");
         } else {
             hasExtraTurn = false;
+            captureExtraTurnUsed = false; // 다음 턴이 되면 초기화
             addToGameLog(getCurrentPlayer().getName() + "의 추가 턴입니다.");
         }
 
@@ -179,8 +190,20 @@ public class Game {
      * @return 윷 결과
      */
     public Yut.YutResult throwYut() {
-        // 이전 턴의 추가 턴 플래그 초기화
-        hasExtraTurn = false;
+        // 기존 코드에서는 hasExtraTurn이 true인 경우에도 초기화했지만,
+        // 상대방 말을 잡아서 추가 턴을 얻은 경우에는 윷을 던지기 전이므로 초기화하면 안 됨
+        if (!hasExtraTurn) {
+            pendingYutResults.clear();
+            isExtraTurnThrow = false;
+        } else {
+            // 이미 추가 턴이 있는 상태에서 던지는 경우
+            isExtraTurnThrow = true;
+        }
+        
+        // 상대방 말 잡기로 얻은 추가 턴일 경우, 윷을 던지면 사용한 것으로 표시
+        if (hasExtraTurn && pendingYutResults.isEmpty()) {
+            captureExtraTurnUsed = true;
+        }
         
         lastYutResult = yut.throwYut();
         addToGameLog(getCurrentPlayer().getName() + "이(가) 윷을 던져 " +
@@ -192,6 +215,9 @@ public class Game {
             addToGameLog(getCurrentPlayer().getName() + "에게 추가 턴이 부여되었습니다. (윷/모)");
         }
 
+        // 윷 결과 저장
+        pendingYutResults.add(lastYutResult);
+
         return lastYutResult;
     }
 
@@ -201,8 +227,20 @@ public class Game {
      * @return 지정된 윷 결과
      */
     public Yut.YutResult setSpecificYutResult(Yut.YutResult result) {
-        // 이전 턴의 추가 턴 플래그 초기화
-        hasExtraTurn = false;
+        // 기존 코드에서는 hasExtraTurn이 true인 경우에도 초기화했지만,
+        // 상대방 말을 잡아서 추가 턴을 얻은 경우에는 윷을 던지기 전이므로 초기화하면 안 됨
+        if (!hasExtraTurn) {
+            pendingYutResults.clear();
+            isExtraTurnThrow = false;
+        } else {
+            // 이미 추가 턴이 있는 상태에서 던지는 경우
+            isExtraTurnThrow = true;
+        }
+        
+        // 상대방 말 잡기로 얻은 추가 턴일 경우, 윷을 던지면 사용한 것으로 표시
+        if (hasExtraTurn && pendingYutResults.isEmpty()) {
+            captureExtraTurnUsed = true;
+        }
         
         lastYutResult = result;
         addToGameLog(getCurrentPlayer().getName() + "이(가) " +
@@ -213,6 +251,9 @@ public class Game {
             hasExtraTurn = true;
             addToGameLog(getCurrentPlayer().getName() + "에게 추가 턴이 부여되었습니다. (윷/모)");
         }
+
+        // 윷 결과 저장
+        pendingYutResults.add(result);
 
         return result;
     }
@@ -242,6 +283,12 @@ public class Game {
      * @return 이동 후 위치
      */
     public Place movePiece(Piece piece, Yut.YutResult result) {
+        // 요청한 결과가 pendingYutResults에 있는지 확인
+        if (!pendingYutResults.contains(result)) {
+            addToGameLog("[오류] 이동에 사용할 수 없는 윷 결과입니다.");
+            return null;
+        }
+
         // 현재 위치 (시작점이거나 이미 보드에 있는 경우)
         Place currentPlace = piece.getCurrentPlace();
         if (currentPlace == null) {
@@ -259,7 +306,10 @@ public class Game {
         addToGameLog(getCurrentPlayer().getName() + "의 말 " + piece.getId() +
                 "이(가) " + (currentPlace.getName() != null ? currentPlace.getName() : "시작점") +
                 "에서 " + (destination.getName() != null ? destination.getName() : "도착점") +
-                "으로 이동했습니다.");
+                "으로 " + result.getName() + "(" + result.getMoveCount() + "칸) 만큼 이동했습니다.");
+
+        // 사용한 윷 결과 제거
+        pendingYutResults.remove(result);
 
         // 중심점 특별 처리
         if (destination.isCenter()) {
@@ -431,6 +481,8 @@ public class Game {
         Player currentPlayer = getCurrentPlayer();
         if (capturingPlayer.equals(currentPlayer)) {
             hasExtraTurn = true;
+            captureExtraTurnUsed = false; // 새로운 잡기 추가 턴
+            // 자동으로 DO 결과를 추가하지 않음 (사용자가 다시 윷을 던져야 함)
             addToGameLog(currentPlayer.getName() + "에게 추가 턴이 부여되었습니다. (잡기)");
         } else {
             addToGameLog("[디버그] 현재 턴 플레이어(" + currentPlayer.getName() +
@@ -615,6 +667,8 @@ public class Game {
 
         // 현재 턴 플레이어에게 추가 턴 부여
         hasExtraTurn = true;
+        captureExtraTurnUsed = false; // 새로운 잡기 추가 턴
+        // 자동으로 DO 결과를 추가하지 않음 (사용자가 다시 윷을 던져야 함)
         addToGameLog(currentPlayer.getName() + "에게 추가 턴이 부여되었습니다. (중심점 잡기)");
 
         return true;
@@ -646,16 +700,62 @@ public class Game {
 
     /**
      * 턴 종료 시 호출되는 메소드
-     * 추가 턴이 없으면 다음 플레이어로 턴 전환
+     * 추가 턴이 없거나, 추가 턴이 있지만 모든 윷 결과를 사용한 경우 다음 플레이어로 턴 전환
      */
     public void endTurnIfNoExtraTurn() {
+        // 추가 턴이 있고, 윷 결과가 비어있는 경우 (상대방 말을 잡아서 추가 턴을 얻은 경우)
+        if (hasExtraTurn && pendingYutResults.isEmpty()) {
+            // 추가 턴에서 던진 윷 결과를 모두 사용했거나, 상대방 말 잡기로 인한 추가 턴이 이미 사용된 경우
+            if (isExtraTurnThrow || captureExtraTurnUsed) {
+                // 추가 턴 사용 완료 - 다음 플레이어로 턴 전환
+                hasExtraTurn = false;
+                isExtraTurnThrow = false;
+                captureExtraTurnUsed = false;
+                nextTurn();
+                return;
+            }
+            
+            // 아직 추가 턴을 사용하지 않은 경우 (윷/모 결과로 얻은 추가 턴)
+            addToGameLog(getCurrentPlayer().getName() + "의 추가 턴이 부여되었습니다. 윷을 던지세요.");
+            return;
+        }
+        
+        // 추가 턴이 없는 경우, 다음 플레이어로 턴 전환
         if (!hasExtraTurn) {
             nextTurn();
-        } else {
-            // 추가 턴이 있으면 다음 턴 시작 시 처리
-            addToGameLog(getCurrentPlayer().getName() + "의 추가 턴이 시작됩니다.");
-            // hasExtraTurn은 다음 윷을 던질 때 초기화됨
+            pendingYutResults.clear();
+        } 
+        // 추가 턴이 있지만, 모든 윷 결과를 사용한 경우 (윷/모가 나온 후 모든 결과를 사용한 경우)
+        else if (pendingYutResults.isEmpty()) {
+            // 이전 수정: 추가 턴을 정상적으로 사용한 경우에도 hasExtraTurn이 true로 유지됨
+            // 이 부분은 이제 위의 if 조건문에서 처리되므로 여기까지 코드가 오지 않을 것임
+            // 예상치 못한 상황을 대비하여 남겨둠
+            hasExtraTurn = false;
+            isExtraTurnThrow = false;
+            nextTurn();
+            addToGameLog(getCurrentPlayer().getName() + "의 턴이 시작되었습니다.");
+        } 
+        // 추가 턴이 있고, 윷 결과가 남아있는 경우
+        else {
+            addToGameLog(getCurrentPlayer().getName() + "의 추가 턴이 남아있습니다. 윷 결과: " + 
+                    formatPendingResults());
         }
+    }
+    
+    /**
+     * 저장된 윷 결과 목록을 문자열로 변환
+     * @return 윷 결과 문자열
+     */
+    private String formatPendingResults() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < pendingYutResults.size(); i++) {
+            Yut.YutResult result = pendingYutResults.get(i);
+            sb.append(result.getName()).append("(").append(result.getMoveCount()).append("칸)");
+            if (i < pendingYutResults.size() - 1) {
+                sb.append(", ");
+            }
+        }
+        return sb.toString();
     }
 
     /**
@@ -761,5 +861,13 @@ public class Game {
      */
     public List<String> getGameLog() {
         return new ArrayList<>(gameLog);
+    }
+
+    /**
+     * 윷/모 결과를 저장하는 리스트 반환
+     * @return 윷/모 결과를 저장하는 리스트
+     */
+    public List<Yut.YutResult> getPendingYutResults() {
+        return new ArrayList<>(pendingYutResults);
     }
 }

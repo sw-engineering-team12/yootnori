@@ -30,6 +30,11 @@ public class GameFrame extends JFrame {
     private JList<String> pieceList;
     private DefaultListModel<String> pieceListModel;
     private JButton moveButton;
+    
+    // 저장된 윷 결과 선택 관련 컴포넌트
+    private JList<String> pendingYutList;
+    private DefaultListModel<String> pendingYutListModel;
+    private JLabel pendingYutLabel;
 
     /**
      * 생성자
@@ -69,6 +74,7 @@ public class GameFrame extends JFrame {
                 Yut.YutResult result = controller.throwYut();
                 updateYutResult(result);
                 updatePieceList();
+                updatePendingYutList();
             }
         });
 
@@ -105,6 +111,7 @@ public class GameFrame extends JFrame {
                 Yut.YutResult setResult = controller.setSpecificYutResult(result);
                 updateYutResult(setResult);
                 updatePieceList();
+                updatePendingYutList();
             }
         });
 
@@ -114,20 +121,41 @@ public class GameFrame extends JFrame {
         pieceListModel = new DefaultListModel<>();
         pieceList = new JList<>(pieceListModel);
         pieceList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        
+        // 저장된 윷 결과 리스트
+        pendingYutListModel = new DefaultListModel<>();
+        pendingYutList = new JList<>(pendingYutListModel);
+        pendingYutList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        pendingYutLabel = new JLabel("이동에 사용할 윷 결과:");
 
         moveButton = new JButton("말 이동");
         moveButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                int selectedIndex = pieceList.getSelectedIndex();
-                if (selectedIndex == -1) {
+                int selectedPieceIndex = pieceList.getSelectedIndex();
+                if (selectedPieceIndex == -1) {
                     JOptionPane.showMessageDialog(GameFrame.this, "이동할 말을 선택해주세요.", "알림", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+                
+                // 선택한 윷 결과 확인
+                int selectedYutIndex = pendingYutList.getSelectedIndex();
+                Yut.YutResult selectedYutResult = null;
+                List<Yut.YutResult> pendingResults = controller.getPendingYutResults();
+                
+                if (selectedYutIndex != -1 && selectedYutIndex < pendingResults.size()) {
+                    selectedYutResult = pendingResults.get(selectedYutIndex);
+                } else if (!pendingResults.isEmpty()) {
+                    // 선택하지 않았으면 첫 번째 결과 사용
+                    selectedYutResult = pendingResults.get(0);
+                } else {
+                    JOptionPane.showMessageDialog(GameFrame.this, "사용할 윷 결과가 없습니다.", "알림", JOptionPane.INFORMATION_MESSAGE);
                     return;
                 }
 
                 List<Piece> movablePieces = controller.getMovablePieces();
-                if (movablePieces != null && !movablePieces.isEmpty() && selectedIndex < movablePieces.size()) {
-                    Piece selectedPiece = movablePieces.get(selectedIndex);
+                if (movablePieces != null && !movablePieces.isEmpty() && selectedPieceIndex < movablePieces.size()) {
+                    Piece selectedPiece = movablePieces.get(selectedPieceIndex);
 
                     // 업힌 말이고 출발점이 null 또는 start인지 확인
                     if (!selectedPiece.getStackedPieces().isEmpty() &&
@@ -143,10 +171,14 @@ public class GameFrame extends JFrame {
                     }
 
                     // 조건을 통과하면 말 이동 실행
-                    controller.movePiece(selectedPiece);
+                    controller.movePiece(selectedPiece, selectedYutResult);
+                    
+                    // 윷 결과 목록 업데이트
+                    updatePendingYutList();
                 }
             }
         });
+
         // 정보 패널 컴포넌트
         currentPlayerLabel = new JLabel("현재 턴: Player 1");
         yutResultLabel = new JLabel("윷 결과: 없음");
@@ -159,7 +191,7 @@ public class GameFrame extends JFrame {
     private void layoutComponents() {
         // 컨트롤 패널 레이아웃
         controlPanel = new JPanel();
-        controlPanel.setLayout(new GridLayout(3, 1, 5, 5));
+        controlPanel.setLayout(new GridLayout(4, 1, 5, 5)); // 한 행 추가
         controlPanel.setBorder(BorderFactory.createTitledBorder("컨트롤"));
 
         JPanel yutPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -170,11 +202,17 @@ public class GameFrame extends JFrame {
         JPanel piecePanel = new JPanel(new BorderLayout());
         piecePanel.add(new JLabel("이동 가능한 말:"), BorderLayout.NORTH);
         piecePanel.add(new JScrollPane(pieceList), BorderLayout.CENTER);
+        
+        // 저장된 윷 결과 패널
+        JPanel pendingYutPanel = new JPanel(new BorderLayout());
+        pendingYutPanel.add(pendingYutLabel, BorderLayout.NORTH);
+        pendingYutPanel.add(new JScrollPane(pendingYutList), BorderLayout.CENTER);
 
         JPanel movePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         movePanel.add(moveButton);
 
         controlPanel.add(yutPanel);
+        controlPanel.add(pendingYutPanel); // 새로운 패널 추가
         controlPanel.add(piecePanel);
         controlPanel.add(movePanel);
 
@@ -210,7 +248,7 @@ public class GameFrame extends JFrame {
      */
     private void updateYutResult(Yut.YutResult result) {
         if (result != null) {
-            yutResultLabel.setText("윷 결과: " + result.getName() + " (" + result.getMoveCount() + "칸)");
+            yutResultLabel.setText("마지막 윷 결과: " + result.getName() + " (" + result.getMoveCount() + "칸)");
         } else {
             yutResultLabel.setText("윷 결과: 없음");
         }
@@ -219,7 +257,6 @@ public class GameFrame extends JFrame {
     /**
      * 이동 가능한 말 목록 업데이트
      */
-// GameFrame 클래스 내부의 updatePieceList() 메서드 수정
     private void updatePieceList() {
         pieceListModel.clear();
         List<Piece> movablePieces = controller.getMovablePieces();
@@ -239,6 +276,23 @@ public class GameFrame extends JFrame {
 
                 pieceListModel.addElement(piece.getId() + " - " + location + stackInfo + carriedInfo);
             }
+        }
+    }
+    
+    /**
+     * 저장된 윷 결과 목록 업데이트
+     */
+    private void updatePendingYutList() {
+        pendingYutListModel.clear();
+        List<Yut.YutResult> pendingResults = controller.getPendingYutResults();
+        
+        if (pendingResults != null && !pendingResults.isEmpty()) {
+            for (Yut.YutResult result : pendingResults) {
+                pendingYutListModel.addElement(result.getName() + " (" + result.getMoveCount() + "칸)");
+            }
+            pendingYutLabel.setText("이동에 사용할 윷 결과 선택 (" + pendingResults.size() + "개):");
+        } else {
+            pendingYutLabel.setText("이동에 사용할 윷 결과가 없습니다.");
         }
     }
 
@@ -264,5 +318,8 @@ public class GameFrame extends JFrame {
 
         // 말 목록 업데이트
         updatePieceList();
+        
+        // 저장된 윷 결과 목록 업데이트
+        updatePendingYutList();
     }
 }
