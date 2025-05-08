@@ -226,16 +226,15 @@ public class Game {
     public List<Piece> getMovablePieces(Player player, Yut.YutResult result) {
         List<Piece> movablePieces = new ArrayList<>();
 
-        // 완주하지 않은 말만 포함
+        // 완주하지 않고 업혀있지 않은 말만 포함
         for (Piece piece : player.getPieces()) {
-            if (!piece.isCompleted()) {
+            if (!piece.isCompleted() && !piece.isCarried()) {
                 movablePieces.add(piece);
             }
         }
 
         return movablePieces;
     }
-
     /**
      * 말 이동 실행
      * @param piece 이동할 말
