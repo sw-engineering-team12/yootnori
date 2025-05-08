@@ -316,8 +316,11 @@ public class Game {
             // 중심점 잡기 확인
             boolean captured = checkCenterCapture(piece);
             if (!captured) {
-                // 잡기가 발생하지 않았으면 업기 확인
-                checkCenterStacking(piece);
+                // 잡기가 발생하지 않았으면 먼저 중심점 업기 확인
+                boolean stacked = checkCenterStacking(piece);
+                
+                // 중심점 업기 이후에도 같은 위치의 업기 확인 (C_1과 C_2의 말 업기를 위해)
+                checkAndApplyGrouping(destination, piece);
             }
         }
         // 일반적인 잡기 확인
@@ -528,8 +531,17 @@ public class Game {
             addToGameLog("[디버그] 업기 실패: 업히는 말이 보드 위에 없습니다. (이미 업힌 상태일 수 있음)");
             return false;
         }
+        
+        // C_1과 C_2는 같은 위치로 취급
+        boolean sameLocation = place1.equals(place2);
+        // 한 말은 C_1에 있고 다른 말은 C_2에 있는 경우
+        if (!sameLocation && 
+            ((place1.getId().equals("C_1") && place2.getId().equals("C_2")) || 
+             (place1.getId().equals("C_2") && place2.getId().equals("C_1")))) {
+            sameLocation = true;
+        }
 
-        if (!place1.equals(place2)) {
+        if (!sameLocation) {
             addToGameLog("[디버그] 업기 실패: 두 말이 서로 다른 위치에 있습니다. place1: " +
                     place1.getId() + ", place2: " + place2.getId());
             return false;
@@ -580,6 +592,17 @@ public class Game {
 
         Player currentPlayer = currentPiece.getPlayer();
         List<Piece> piecesAtPlace = new ArrayList<>(place.getPieces());
+        
+        // 현재 위치가 C_1 또는 C_2인 경우, 다른 중심점에 있는 말도 고려
+        if (place.isCenter() && (place.getId().equals("C_1") || place.getId().equals("C_2"))) {
+            String otherCenterId = place.getId().equals("C_1") ? "C_2" : "C_1";
+            Place otherCenter = board.getPlaceById(otherCenterId);
+            
+            if (otherCenter != null) {
+                // 다른 중심점에 있는 말도 추가
+                piecesAtPlace.addAll(otherCenter.getPieces());
+            }
+        }
 
         // 현재 위치에 같은 플레이어의 말이 있는지 확인
         List<Piece> samePlayerPieces = new ArrayList<>();
