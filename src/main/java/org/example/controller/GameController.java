@@ -62,15 +62,25 @@ public class GameController {
     /**
      * 말 이동 실행
      * @param piece 이동할 말
+     * @param yutResult 이동에 사용할 윷 결과
      * @return 이동 후 위치
      */
-    public Place movePiece(Piece piece) {
-        if (game.getLastYutResult() == null) {
+    public Place movePiece(Piece piece, Yut.YutResult yutResult) {
+        if (game.getPendingYutResults().isEmpty()) {
             JOptionPane.showMessageDialog(gameFrame, "먼저 윷을 던져야 합니다.", "알림", JOptionPane.INFORMATION_MESSAGE);
             return null;
         }
 
-        Place destination = game.movePiece(piece, game.getLastYutResult());
+        // 윷 결과가 제공되지 않은 경우 첫 번째 결과를 사용 (기존 기능과의 호환성)
+        if (yutResult == null) {
+            yutResult = game.getPendingYutResults().get(0);
+        }
+
+        Place destination = game.movePiece(piece, yutResult);
+        if (destination == null) {
+            JOptionPane.showMessageDialog(gameFrame, "이동할 수 없습니다.", "알림", JOptionPane.INFORMATION_MESSAGE);
+            return null;
+        }
 
         // 이동 후 게임 종료 체크
         if (game.checkGameEnd()) {
@@ -100,15 +110,26 @@ public class GameController {
     }
 
     /**
+     * 말 이동 실행 (기존 메서드와의 호환성 유지)
+     * @param piece 이동할 말
+     * @return 이동 후 위치
+     */
+    public Place movePiece(Piece piece) {
+        return movePiece(piece, null);
+    }
+
+    /**
      * 현재 턴 플레이어의 이동 가능한 말 목록 반환
      * @return 이동 가능한 말 목록
      */
     public List<Piece> getMovablePieces() {
-        if (game.getLastYutResult() == null) {
+        if (game.getPendingYutResults().isEmpty()) {
             return new ArrayList<>();
         }
 
-        List<Piece> allPieces = game.getMovablePieces(game.getCurrentPlayer(), game.getLastYutResult());
+        // 여러 윷 결과가 있어도 말이 이동할 수 있는지 여부는 동일함
+        Yut.YutResult firstResult = game.getPendingYutResults().get(0);
+        List<Piece> allPieces = game.getMovablePieces(game.getCurrentPlayer(), firstResult);
         List<Piece> validMovablePieces = new ArrayList<>();
 
         // 업혀있지 않은 말만 반환
@@ -119,6 +140,14 @@ public class GameController {
         }
 
         return validMovablePieces;
+    }
+
+    /**
+     * 현재 보류 중인 윷 결과 목록 반환
+     * @return 윷 결과 목록
+     */
+    public List<Yut.YutResult> getPendingYutResults() {
+        return game.getPendingYutResults();
     }
 
     /**
