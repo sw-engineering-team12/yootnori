@@ -128,11 +128,25 @@ public class GameFrame extends JFrame {
                 List<Piece> movablePieces = controller.getMovablePieces();
                 if (movablePieces != null && !movablePieces.isEmpty() && selectedIndex < movablePieces.size()) {
                     Piece selectedPiece = movablePieces.get(selectedIndex);
+
+                    // 업힌 말이고 출발점이 null 또는 start인지 확인
+                    if (!selectedPiece.getStackedPieces().isEmpty() &&
+                            (selectedPiece.getCurrentPlace() == null ||
+                                    "시작점".equals(selectedPiece.getCurrentPlace().getName()) ||
+                                    "start".equalsIgnoreCase(selectedPiece.getCurrentPlace().getName()))) {
+
+                        JOptionPane.showMessageDialog(GameFrame.this,
+                                "업힌 말입니다.",
+                                "알림",
+                                JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+
+                    // 조건을 통과하면 말 이동 실행
                     controller.movePiece(selectedPiece);
                 }
             }
         });
-
         // 정보 패널 컴포넌트
         currentPlayerLabel = new JLabel("현재 턴: Player 1");
         yutResultLabel = new JLabel("윷 결과: 없음");
@@ -205,6 +219,7 @@ public class GameFrame extends JFrame {
     /**
      * 이동 가능한 말 목록 업데이트
      */
+// GameFrame 클래스 내부의 updatePieceList() 메서드 수정
     private void updatePieceList() {
         pieceListModel.clear();
         List<Piece> movablePieces = controller.getMovablePieces();
@@ -214,10 +229,15 @@ public class GameFrame extends JFrame {
                 String location = piece.getCurrentPlace() != null ?
                         piece.getCurrentPlace().getName() : "시작점";
 
+                // 업힌 말 정보
                 String stackInfo = piece.getStackedPieces().isEmpty() ?
                         "" : " (업힌 말: " + piece.getStackedPieces().size() + "개)";
 
-                pieceListModel.addElement(piece.getId() + " - " + location + stackInfo);
+                // 업혀있는 상태 정보 (이 말을 업고 있는 말)
+                String carriedInfo = piece.isCarried() ?
+                        " [" + piece.getCarriedBy().getId() + "에 업힘]" : "";
+
+                pieceListModel.addElement(piece.getId() + " - " + location + stackInfo + carriedInfo);
             }
         }
     }
