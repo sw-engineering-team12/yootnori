@@ -402,6 +402,9 @@ public class Game {
                 for (Piece stackedPiece : stackedPieces) {
                     addToGameLog("업힌 말 " + stackedPiece.getId() + "이(가) 시작점으로 돌아갑니다.");
 
+                    // 중요: carriedBy 관계 해제
+                    stackedPiece.setCarriedBy(null);
+
                     // 먼저 업힌 말을 스택에서 제거
                     opponentPiece.getStackedPieces().remove(stackedPiece);
 
