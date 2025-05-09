@@ -45,6 +45,10 @@ public class GameController {
     public Yut.YutResult throwYut() {
         Yut.YutResult result = game.throwYut();
         updateUI();
+
+        // 윷 던진 후 이동 가능한 말이 있는지 확인
+        checkMovablePieces();
+
         return result;
     }
 
@@ -56,7 +60,33 @@ public class GameController {
     public Yut.YutResult setSpecificYutResult(Yut.YutResult result) {
         Yut.YutResult setResult = game.setSpecificYutResult(result);
         updateUI();
+
+        // 윷 던진 후 이동 가능한 말이 있는지 확인
+        checkMovablePieces();
+
         return setResult;
+    }
+
+    /**
+     * 이동 가능한 말이 있는지 확인하고, 없으면 턴을 자동 종료
+     */
+    private void checkMovablePieces() {
+        if (!game.getPendingYutResults().isEmpty()) {
+            List<Piece> movablePieces = getMovablePieces();
+            if (movablePieces.isEmpty()) {
+                // 이동 가능한 말이 없으면 메시지 표시
+                if (gameFrame != null) {
+                    JOptionPane.showMessageDialog(gameFrame,
+                            "이동 가능한 말이 없습니다. 턴을 넘깁니다.",
+                            "알림",
+                            JOptionPane.INFORMATION_MESSAGE);
+                }
+
+                // 턴 종료 처리
+                game.endTurnIfNoExtraTurn();
+                updateUI();
+            }
+        }
     }
 
     /**
@@ -103,6 +133,12 @@ public class GameController {
         } else {
             // 다음 턴으로 진행
             game.endTurnIfNoExtraTurn();
+
+            // 다음 플레이어의 턴으로 넘어갔을 때, 이동 가능한 말이 있는지 확인
+            SwingUtilities.invokeLater(() -> {
+                updateUI();
+                checkMovablePieces();
+            });
         }
 
         updateUI();
