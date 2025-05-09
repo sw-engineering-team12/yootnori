@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="yootnori:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/yootnori_jar</output-path>
+    <root id="archive" name="yootnori.jar">
+      <element id="module-output" name="yootnori" />
+    </root>
+  </artifact>
+</component>

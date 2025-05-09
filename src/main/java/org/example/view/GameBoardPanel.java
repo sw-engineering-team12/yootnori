@@ -272,6 +272,11 @@ public class GameBoardPanel extends JPanel {
                 placePositions.put(placeId, new Point(nodeX, nodeY));
             }
         }
+
+        // S 위치 추가 (0번 인덱스의 꼭지점)
+        drawNode(g2d, xPoints[0], yPoints[0], "S", board);
+        placePositions.put("S", new Point(xPoints[0], yPoints[0]));
+
         // 중앙 노드 (하나만)
         drawNode(g2d, centerX, centerY, "C_1", board);
         placePositions.put("C_1", new Point(centerX, centerY));
@@ -311,6 +316,11 @@ public class GameBoardPanel extends JPanel {
         g2d.setColor(Color.BLACK);
         g2d.setStroke(new BasicStroke(2));
         g2d.drawPolygon(xPoints, yPoints, 6);
+
+        // S 위치 추가 (0번 인덱스의 꼭지점)
+        drawNode(g2d, xPoints[0], yPoints[0], "S", board);
+        placePositions.put("S", new Point(xPoints[0], yPoints[0]));
+
         // 꼭지점 노드
         for (int i = 0; i < 6; i++) {
             drawNode(g2d, xPoints[i], yPoints[i], String.valueOf(i * 5), board);
@@ -358,6 +368,7 @@ public class GameBoardPanel extends JPanel {
         if (row == 0 && col == 5) return "5"; // 우상단
         if (row == 5 && col == 5) return "10"; // 우하단 
         if (row == 5 && col == 0) return "15"; // 좌하단
+
 
         if (row == 0) return String.valueOf(col);     // 상단 변
         if (col == 5) return String.valueOf(5 + row); // 우측 변
@@ -419,84 +430,124 @@ public class GameBoardPanel extends JPanel {
     /**
      * 말 그리기
      */
+    /**
+     * 말 그리기
+     */
     private void drawPieces(Graphics2D g2d) {
         Game game = controller.getGame();
         if (game == null) return;
 
-        // 디버깅 로그 생략
+        // 디버그 출력: 모든 위치 목록
+        System.out.println("=== placePositions 맵의 키 ===");
+        for (String key : placePositions.keySet()) {
+            System.out.println("위치 ID: " + key);
+        }
+
+        // 디버그 출력: 모든 말 정보
+        System.out.println("=== 모든 말 정보 ===");
+        for (Player player : game.getPlayers()) {
+            for (Piece piece : player.getPieces()) {
+                Place place = piece.getCurrentPlace();
+                if (place != null) {
+                    System.out.println("말: " + piece.getId()
+                            + ", 위치: " + place.getId()
+                            + ", 플레이어: " + player.getName());
+                }
+            }
+        }
+
+        // 시작점 위치 좌표 가져오기
+        Point startPoint = placePositions.get("S");
+        System.out.println("시작점(S) 좌표: " + (startPoint != null ? startPoint.x + "," + startPoint.y : "null"));
 
         // 모든 플레이어의 말 그리기
         for (Player player : game.getPlayers()) {
             for (Piece piece : player.getPieces()) {
                 Place place = piece.getCurrentPlace();
 
-                if (place != null) {
-                    // E 위치에 있는 말은 S 위치에 그리기
-                    String positionId = place.getId();
-                    if ("E".equals(positionId)) {
-                        positionId = "S"; // E 위치의 말을 S 위치에 그리도록 변경
+                // 말이 보드 위에 없으면 그리지 않음
+                if (place == null) continue;
+
+                // S 위치에 있는 말은 그리지 않음 (시작점)
+                if (place.isStartingPoint()) {
+                    System.out.println("시작점에 있는 말 건너뜀: " + piece.getId());
+                    continue;
+                }
+
+                // E 위치에 있는 말은 S 위치에 그림
+                if (place.getId().equals("E")) {
+                    System.out.println("E 위치에 있는 말 발견: " + piece.getId() + ", S 위치에 그립니다.");
+
+                    if (startPoint != null) {
+                        drawPieceAt(g2d, piece, player, startPoint);
+                    } else {
+                        System.out.println("오류: S 위치 좌표를 찾을 수 없습니다!");
                     }
+                    continue;
+                }
 
-                    // S 위치에 있는 말은 그리지 않음 (E 위치의 말은 S 위치에 그리도록 함)
-                    if ("S".equals(place.getId())) {
-                        continue;
-                    }
+                // 그 외 위치에 있는 말 그리기
+                Point point = placePositions.get(place.getId());
 
-                    if (placePositions.containsKey(positionId)) {
-                        Point point = placePositions.get(positionId);
+                if (point != null) {
+                    drawPieceAt(g2d, piece, player, point);
+                } else {
+                    System.out.println("위치 ID에 대한 좌표를 찾을 수 없음: " + place.getId());
+                }
+            }
+        }
+    }
 
-                        // 말 색상 설정
-                        Color color = playerColors.getOrDefault(player.getId(), Color.GRAY);
+    /**
+     * 지정된 위치에 말 그리기
+     */
+    private void drawPieceAt(Graphics2D g2d, Piece piece, Player player, Point point) {
+        // 말 색상 설정
+        Color color = playerColors.getOrDefault(player.getId(), Color.GRAY);
 
-                        // 현재 플레이어의 말은 테두리 강조
-                        if (player.equals(game.getCurrentPlayer())) {
-                            g2d.setColor(Color.BLACK);
-                            g2d.fillOval(point.x - (PIECE_SIZE / 2) - 2,
-                                    point.y - (PIECE_SIZE / 2) - 2,
-                                    PIECE_SIZE + 4, PIECE_SIZE + 4);
-                        }
+        // 현재 플레이어의 말은 테두리 강조
+        if (player.equals(controller.getGame().getCurrentPlayer())) {
+            g2d.setColor(Color.BLACK);
+            g2d.fillOval(point.x - (PIECE_SIZE / 2) - 2,
+                    point.y - (PIECE_SIZE / 2) - 2,
+                    PIECE_SIZE + 4, PIECE_SIZE + 4);
+        }
 
-                        // 말 그리기
-                        g2d.setColor(color);
-                        g2d.fillOval(point.x - (PIECE_SIZE / 2),
-                                point.y - (PIECE_SIZE / 2),
-                                PIECE_SIZE, PIECE_SIZE);
+        // 말 그리기
+        g2d.setColor(color);
+        g2d.fillOval(point.x - (PIECE_SIZE / 2),
+                point.y - (PIECE_SIZE / 2),
+                PIECE_SIZE, PIECE_SIZE);
 
-                        // 업힌 말이 있으면 숫자 표시
-                        int stackCount = piece.getStackedPieces().size();
-                        if (stackCount > 0) {
-                            g2d.setColor(Color.WHITE);
-                            g2d.drawString(String.valueOf(stackCount + 1),
-                                    point.x - 4, point.y + 4);
-                        }
+        // 업힌 말이 있으면 숫자 표시
+        int stackCount = piece.getStackedPieces().size();
+        if (stackCount > 0) {
+            g2d.setColor(Color.WHITE);
+            g2d.drawString(String.valueOf(stackCount + 1),
+                    point.x - 4, point.y + 4);
+        }
 
-                        // C_2 노드에 말이 있을 경우 C_1 노드에도 같은 말 표시
-                        if (positionId.equals("C_2")) {
-                            Point c1Point = placePositions.get("C_1");
-                            if (c1Point != null) {
-                                // 현재 플레이어의 말은 테두리 강조
-                                if (player.equals(game.getCurrentPlayer())) {
-                                    g2d.setColor(Color.BLACK);
-                                    g2d.fillOval(c1Point.x - (PIECE_SIZE / 2) - 2,
-                                            c1Point.y - (PIECE_SIZE / 2) - 2,
-                                            PIECE_SIZE + 4, PIECE_SIZE + 4);
-                                }
+        // C_2 노드에 있는 말은 C_1에도 표시
+        if (piece.getCurrentPlace() != null && piece.getCurrentPlace().getId().equals("C_2")) {
+            Point c1Point = placePositions.get("C_1");
+            if (c1Point != null) {
+                // 동일한 말 그리기 로직 적용
+                if (player.equals(controller.getGame().getCurrentPlayer())) {
+                    g2d.setColor(Color.BLACK);
+                    g2d.fillOval(c1Point.x - (PIECE_SIZE / 2) - 2,
+                            c1Point.y - (PIECE_SIZE / 2) - 2,
+                            PIECE_SIZE + 4, PIECE_SIZE + 4);
+                }
 
-                                // 말 그리기
-                                g2d.setColor(color);
-                                g2d.fillOval(c1Point.x - (PIECE_SIZE / 2),
-                                        c1Point.y - (PIECE_SIZE / 2),
-                                        PIECE_SIZE, PIECE_SIZE);
+                g2d.setColor(color);
+                g2d.fillOval(c1Point.x - (PIECE_SIZE / 2),
+                        c1Point.y - (PIECE_SIZE / 2),
+                        PIECE_SIZE, PIECE_SIZE);
 
-                                // 업힌 말이 있으면 숫자 표시
-                                if (stackCount > 0) {
-                                    g2d.setColor(Color.WHITE);
-                                    g2d.drawString(String.valueOf(stackCount + 1),
-                                            c1Point.x - 4, c1Point.y + 4);
-                                }
-                            }
-                        }
-                    }
+                if (stackCount > 0) {
+                    g2d.setColor(Color.WHITE);
+                    g2d.drawString(String.valueOf(stackCount + 1),
+                            c1Point.x - 4, c1Point.y + 4);
                 }
             }
         }
