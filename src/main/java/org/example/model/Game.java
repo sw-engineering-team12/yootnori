@@ -270,6 +270,10 @@ public class Game {
         // 완주하지 않고 업혀있지 않은 말만 포함
         for (Piece piece : player.getPieces()) {
             if (!piece.isCompleted() && !piece.isCarried()) {
+                if (result == Yut.YutResult.BACKDO &&
+                        (piece.getCurrentPlace() == null || piece.getCurrentPlace().isStartingPoint())) {
+                    continue; // 이 말은 이동 불가능하므로 건너뜀
+                }
                 movablePieces.add(piece);
             }
         }
@@ -298,6 +302,7 @@ public class Game {
 
         // 목적지 계산
         Place destination = board.calculateDestination(currentPlace, result);
+        addToGameLog(destination.toString());
 
         // 이동 실행
         piece.moveTo(destination);

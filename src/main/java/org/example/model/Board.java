@@ -85,7 +85,7 @@ public class Board {
         end.setPreviousPlace(outerPath[19]); // 역방향 참조 설정
 
         start.setNextPlace(outerPath[1]);
-        outerPath[1].setPreviousPlace(start); // 역방향 참조 설정
+        outerPath[1].setPreviousPlace(end); // 역방향 참조 설정
 
         outerPath[5].setJunction(true);
         outerPath[10].setJunction(true);
@@ -185,7 +185,7 @@ public class Board {
         end.setPreviousPlace(outerPath[24]); // 역방향 참조 설정
 
         start.setNextPlace(outerPath[1]);
-        outerPath[1].setPreviousPlace(start); // 역방향 참조 설정
+        outerPath[1].setPreviousPlace(end); // 역방향 참조 설정
 
         // 중앙 지점 생성
         Place center1 = createPlace("C_1", "중앙1", true, true, false, false);
@@ -294,7 +294,7 @@ public class Board {
         end.setPreviousPlace(outerPath[29]); // 역방향 참조 설정
 
         start.setNextPlace(outerPath[1]);
-        outerPath[1].setPreviousPlace(start); // 역방향 참조 설정
+        outerPath[1].setPreviousPlace(end); // 역방향 참조 설정
 
         Place C1 = createPlace("C1", "C1");
         Place C2 = createPlace("C2", "C2");
