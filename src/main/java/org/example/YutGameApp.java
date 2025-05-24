@@ -1,9 +1,6 @@
 package org.example;
 
-import org.example.controller.GameController;
-import org.example.model.Board;
-import org.example.model.GameSettings;
-import org.example.view.GameSetupFrame;
+import org.example.view.swing.GameSetupFrame;
 
 import javax.swing.*;
 

@@ -5,14 +5,10 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
-import javafx.scene.text.FontWeight;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import org.example.controller.GameController;
-import org.example.model.Board;
-import org.example.model.Game;
-import org.example.model.Piece;
-import org.example.model.Place;
-import org.example.model.Player;
+import org.example.model.*;
 
 import java.util.HashMap;
 import java.util.List;
