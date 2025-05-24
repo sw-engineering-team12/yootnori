@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 게임 보드를 그리는 패널
+ * 게임 보드를 그리는 패널 (Swing 버전)
  */
 public class GameBoardPanel extends JPanel {
     private GameController controller;
@@ -180,7 +180,6 @@ public class GameBoardPanel extends JPanel {
 
         // 각 모서리 좌표
         int sx = x, sy = y; // S
-        int sex = x, sey = y; // E
         int s5x = x + size, s5y = y; // 5
         int s10x = x + size, s10y = y + size; // 10
         int s15x = x, s15y = y + size; // 15
@@ -225,7 +224,7 @@ public class GameBoardPanel extends JPanel {
         drawPath(g2d, c6x, c6y, c5x, c5y);
         drawPath(g2d, c5x, c5y, centerX, centerY);
 
-        // E~C_1: C3, C4
+        // 10~C_2: C3, C4
         int c3x = (int)(s10x * 2.0/3 + centerX * 1.0/3);
         int c3y = (int)(s10y * 2.0/3 + centerY * 1.0/3);
         int c4x = (int)(s10x * 1.0/3 + centerX * 2.0/3);
@@ -256,11 +255,13 @@ public class GameBoardPanel extends JPanel {
         g2d.setColor(Color.BLACK);
         g2d.setStroke(new BasicStroke(2));
         g2d.drawPolygon(xPoints, yPoints, 5);
+
         // 꼭지점 노드
         for (int i = 0; i < 5; i++) {
             drawNode(g2d, xPoints[i], yPoints[i], String.valueOf(i * 5), board);
             placePositions.put(String.valueOf(i * 5), new Point(xPoints[i], yPoints[i]));
         }
+
         // 변의 중간 노드들
         for (int i = 0; i < 5; i++) {
             int nextIdx = (i + 1) % 5;
@@ -280,6 +281,7 @@ public class GameBoardPanel extends JPanel {
         // 중앙 노드 (하나만)
         drawNode(g2d, centerX, centerY, "C_1", board);
         placePositions.put("C_1", new Point(centerX, centerY));
+
         // 대각선 경로: 각 꼭지점~중앙 1/3, 2/3 지점에 C노드 배치 (C10, C9, C1, C2, C3, C4, C5, C6, C8, C7)
         String[] cNodeIds = {"C10", "C9", "C1", "C2", "C3", "C4", "C5", "C6", "C8", "C7"};
         for (int i = 0; i < 5; i++) {
@@ -326,6 +328,7 @@ public class GameBoardPanel extends JPanel {
             drawNode(g2d, xPoints[i], yPoints[i], String.valueOf(i * 5), board);
             placePositions.put(String.valueOf(i * 5), new Point(xPoints[i], yPoints[i]));
         }
+
         // 변의 중간 노드들
         for (int i = 0; i < 6; i++) {
             int nextIdx = (i + 1) % 6;
@@ -337,9 +340,11 @@ public class GameBoardPanel extends JPanel {
                 placePositions.put(placeId, new Point(nodeX, nodeY));
             }
         }
+
         // 중앙 노드 (하나만)
         drawNode(g2d, centerX, centerY, "C_1", board);
         placePositions.put("C_1", new Point(centerX, centerY));
+
         // 대각선 경로: 각 꼭지점~중앙 1/3, 2/3 지점에 C노드 배치 (C12, C11, C1-C8, C10, C9)
         String[] cNodeIds = {"C12", "C11", "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C10", "C9"};
         for (int i = 0; i < 6; i++) {
@@ -366,9 +371,8 @@ public class GameBoardPanel extends JPanel {
         // 외곽 노드 번호 계산
         if (row == 0 && col == 0) return "S"; // 좌상단 (시작점, 도착점)
         if (row == 0 && col == 5) return "5"; // 우상단
-        if (row == 5 && col == 5) return "10"; // 우하단 
+        if (row == 5 && col == 5) return "10"; // 우하단
         if (row == 5 && col == 0) return "15"; // 좌하단
-
 
         if (row == 0) return String.valueOf(col);     // 상단 변
         if (col == 5) return String.valueOf(5 + row); // 우측 변
@@ -430,35 +434,12 @@ public class GameBoardPanel extends JPanel {
     /**
      * 말 그리기
      */
-    /**
-     * 말 그리기
-     */
     private void drawPieces(Graphics2D g2d) {
         Game game = controller.getGame();
         if (game == null) return;
 
-        // 디버그 출력: 모든 위치 목록
-        System.out.println("=== placePositions 맵의 키 ===");
-        for (String key : placePositions.keySet()) {
-            System.out.println("위치 ID: " + key);
-        }
-
-        // 디버그 출력: 모든 말 정보
-        System.out.println("=== 모든 말 정보 ===");
-        for (Player player : game.getPlayers()) {
-            for (Piece piece : player.getPieces()) {
-                Place place = piece.getCurrentPlace();
-                if (place != null) {
-                    System.out.println("말: " + piece.getId()
-                            + ", 위치: " + place.getId()
-                            + ", 플레이어: " + player.getName());
-                }
-            }
-        }
-
         // 시작점 위치 좌표 가져오기
         Point startPoint = placePositions.get("S");
-        System.out.println("시작점(S) 좌표: " + (startPoint != null ? startPoint.x + "," + startPoint.y : "null"));
 
         // 모든 플레이어의 말 그리기
         for (Player player : game.getPlayers()) {
@@ -470,18 +451,13 @@ public class GameBoardPanel extends JPanel {
 
                 // S 위치에 있는 말은 그리지 않음 (시작점)
                 if (place.isStartingPoint()) {
-                    System.out.println("시작점에 있는 말 건너뜀: " + piece.getId());
                     continue;
                 }
 
                 // E 위치에 있는 말은 S 위치에 그림
                 if (place.getId().equals("E")) {
-                    System.out.println("E 위치에 있는 말 발견: " + piece.getId() + ", S 위치에 그립니다.");
-
                     if (startPoint != null) {
                         drawPieceAt(g2d, piece, player, startPoint);
-                    } else {
-                        System.out.println("오류: S 위치 좌표를 찾을 수 없습니다!");
                     }
                     continue;
                 }
@@ -491,8 +467,6 @@ public class GameBoardPanel extends JPanel {
 
                 if (point != null) {
                     drawPieceAt(g2d, piece, player, point);
-                } else {
-                    System.out.println("위치 ID에 대한 좌표를 찾을 수 없음: " + place.getId());
                 }
             }
         }
@@ -552,6 +526,7 @@ public class GameBoardPanel extends JPanel {
             }
         }
     }
+
     /**
      * 보드 업데이트
      */
