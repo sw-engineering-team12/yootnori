@@ -1,4 +1,4 @@
-package org.example.view;
+package org.example.view.swing;
 
 import org.example.model.Yut;
 

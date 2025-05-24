@@ -1,6 +1,6 @@
-package org.example.view;
+package org.example.view.swing;
 
-import org.example.controller.GameController;
+import org.example.controller.swing.SwingGameController;
 import org.example.model.Game;
 import org.example.model.Piece;
 import org.example.model.Yut;
@@ -12,10 +12,10 @@ import java.awt.event.ActionListener;
 import java.util.List;
 
 /**
- * 게임 메인 화면 프레임
+ * 게임 메인 화면 프레임 (Swing 버전)
  */
 public class GameFrame extends JFrame {
-    private GameController controller;
+    private SwingGameController controller;
     private GameBoardPanel boardPanel;
     private JPanel controlPanel;
     private JPanel infoPanel;
@@ -30,7 +30,7 @@ public class GameFrame extends JFrame {
     private JList<String> pieceList;
     private DefaultListModel<String> pieceListModel;
     private JButton moveButton;
-    
+
     // 저장된 윷 결과 선택 관련 컴포넌트
     private JList<String> pendingYutList;
     private DefaultListModel<String> pendingYutListModel;
@@ -40,14 +40,14 @@ public class GameFrame extends JFrame {
      * 생성자
      * @param controller 게임 컨트롤러
      */
-    public GameFrame(GameController controller) {
+    public GameFrame(SwingGameController controller) {
         this.controller = controller;
 
         // 윈도우 설정
-        setTitle("윷놀이 게임");
+        setTitle("윷놀이 게임 - Swing");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1024, 768);
-        setLocationRelativeTo(null); // 화면 중앙에 표시
+        setLocationRelativeTo(null);
 
         // 레이아웃 설정
         setLayout(new BorderLayout());
@@ -86,26 +86,13 @@ public class GameFrame extends JFrame {
                 Yut.YutResult result;
 
                 switch (selected) {
-                    case "빽도":
-                        result = Yut.YutResult.BACKDO;
-                        break;
-                    case "도":
-                        result = Yut.YutResult.DO;
-                        break;
-                    case "개":
-                        result = Yut.YutResult.GAE;
-                        break;
-                    case "걸":
-                        result = Yut.YutResult.GEOL;
-                        break;
-                    case "윷":
-                        result = Yut.YutResult.YUT;
-                        break;
-                    case "모":
-                        result = Yut.YutResult.MO;
-                        break;
-                    default:
-                        result = Yut.YutResult.DO;
+                    case "빽도": result = Yut.YutResult.BACKDO; break;
+                    case "도": result = Yut.YutResult.DO; break;
+                    case "개": result = Yut.YutResult.GAE; break;
+                    case "걸": result = Yut.YutResult.GEOL; break;
+                    case "윷": result = Yut.YutResult.YUT; break;
+                    case "모": result = Yut.YutResult.MO; break;
+                    default: result = Yut.YutResult.DO;
                 }
 
                 Yut.YutResult setResult = controller.setSpecificYutResult(result);
@@ -121,7 +108,7 @@ public class GameFrame extends JFrame {
         pieceListModel = new DefaultListModel<>();
         pieceList = new JList<>(pieceListModel);
         pieceList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        
+
         // 저장된 윷 결과 리스트
         pendingYutListModel = new DefaultListModel<>();
         pendingYutList = new JList<>(pendingYutListModel);
@@ -137,12 +124,12 @@ public class GameFrame extends JFrame {
                     JOptionPane.showMessageDialog(GameFrame.this, "이동할 말을 선택해주세요.", "알림", JOptionPane.INFORMATION_MESSAGE);
                     return;
                 }
-                
+
                 // 선택한 윷 결과 확인
                 int selectedYutIndex = pendingYutList.getSelectedIndex();
                 Yut.YutResult selectedYutResult = null;
                 List<Yut.YutResult> pendingResults = controller.getPendingYutResults();
-                
+
                 if (selectedYutIndex != -1 && selectedYutIndex < pendingResults.size()) {
                     selectedYutResult = pendingResults.get(selectedYutIndex);
                 } else if (!pendingResults.isEmpty()) {
@@ -172,7 +159,7 @@ public class GameFrame extends JFrame {
 
                     // 조건을 통과하면 말 이동 실행
                     controller.movePiece(selectedPiece, selectedYutResult);
-                    
+
                     // 윷 결과 목록 업데이트
                     updatePendingYutList();
                 }
@@ -191,7 +178,7 @@ public class GameFrame extends JFrame {
     private void layoutComponents() {
         // 컨트롤 패널 레이아웃
         controlPanel = new JPanel();
-        controlPanel.setLayout(new GridLayout(4, 1, 5, 5)); // 한 행 추가
+        controlPanel.setLayout(new GridLayout(4, 1, 5, 5));
         controlPanel.setBorder(BorderFactory.createTitledBorder("컨트롤"));
 
         JPanel yutPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -202,7 +189,7 @@ public class GameFrame extends JFrame {
         JPanel piecePanel = new JPanel(new BorderLayout());
         piecePanel.add(new JLabel("이동 가능한 말:"), BorderLayout.NORTH);
         piecePanel.add(new JScrollPane(pieceList), BorderLayout.CENTER);
-        
+
         // 저장된 윷 결과 패널
         JPanel pendingYutPanel = new JPanel(new BorderLayout());
         pendingYutPanel.add(pendingYutLabel, BorderLayout.NORTH);
@@ -212,7 +199,7 @@ public class GameFrame extends JFrame {
         movePanel.add(moveButton);
 
         controlPanel.add(yutPanel);
-        controlPanel.add(pendingYutPanel); // 새로운 패널 추가
+        controlPanel.add(pendingYutPanel);
         controlPanel.add(piecePanel);
         controlPanel.add(movePanel);
 
@@ -222,13 +209,13 @@ public class GameFrame extends JFrame {
         infoPanel.setBorder(BorderFactory.createTitledBorder("게임 정보"));
         infoPanel.add(currentPlayerLabel);
         infoPanel.add(yutResultLabel);
-        infoPanel.setPreferredSize(new Dimension(300, 150)); // 크기 키움
+        infoPanel.setPreferredSize(new Dimension(300, 150));
 
         // 로그 패널 레이아웃
         logPanel = new JPanel(new BorderLayout());
         logPanel.setBorder(BorderFactory.createTitledBorder("게임 로그"));
         logPanel.add(new JScrollPane(logTextArea), BorderLayout.CENTER);
-        logPanel.setPreferredSize(new Dimension(300, 300)); // 로그 패널 크기
+        logPanel.setPreferredSize(new Dimension(300, 300));
 
         // 사이드 패널 통합
         JPanel sidePanel = new JPanel();
@@ -278,14 +265,14 @@ public class GameFrame extends JFrame {
             }
         }
     }
-    
+
     /**
      * 저장된 윷 결과 목록 업데이트
      */
     private void updatePendingYutList() {
         pendingYutListModel.clear();
         List<Yut.YutResult> pendingResults = controller.getPendingYutResults();
-        
+
         if (pendingResults != null && !pendingResults.isEmpty()) {
             for (Yut.YutResult result : pendingResults) {
                 pendingYutListModel.addElement(result.getName() + " (" + result.getMoveCount() + "칸)");
@@ -301,25 +288,27 @@ public class GameFrame extends JFrame {
      */
     public void updateGameInfo() {
         Game game = controller.getGame();
-        currentPlayerLabel.setText("현재 턴: " + game.getCurrentPlayer().getName());
+        if (game != null) {
+            currentPlayerLabel.setText("현재 턴: " + game.getCurrentPlayer().getName());
 
-        // 게임 로그 업데이트
-        logTextArea.setText("");
-        List<String> logs = game.getGameLog();
-        for (String log : logs) {
-            logTextArea.append(log + "\n");
+            // 게임 로그 업데이트
+            logTextArea.setText("");
+            List<String> logs = game.getGameLog();
+            for (String log : logs) {
+                logTextArea.append(log + "\n");
+            }
+
+            // 항상 최신 로그가 보이도록 스크롤
+            logTextArea.setCaretPosition(logTextArea.getDocument().getLength());
+
+            // 윷 결과 업데이트
+            updateYutResult(game.getLastYutResult());
+
+            // 말 목록 업데이트
+            updatePieceList();
+
+            // 저장된 윷 결과 목록 업데이트
+            updatePendingYutList();
         }
-
-        // 항상 최신 로그가 보이도록 스크롤
-        logTextArea.setCaretPosition(logTextArea.getDocument().getLength());
-
-        // 윷 결과 업데이트
-        updateYutResult(game.getLastYutResult());
-
-        // 말 목록 업데이트
-        updatePieceList();
-        
-        // 저장된 윷 결과 목록 업데이트
-        updatePendingYutList();
     }
 }

@@ -1,6 +1,6 @@
-package org.example.view;
+package org.example.view.swing;
 
-import org.example.controller.GameController;
+import org.example.controller.swing.SwingGameController;
 import org.example.model.Board;
 import org.example.model.GameSettings;
 
@@ -10,7 +10,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
- * 게임 설정 화면
+ * 게임 설정 화면 (Swing 버전)
  */
 public class GameSetupFrame extends JFrame {
     private JComboBox<String> boardTypeCombo;
@@ -20,10 +20,10 @@ public class GameSetupFrame extends JFrame {
 
     public GameSetupFrame() {
         // 윈도우 설정
-        setTitle("윷놀이 게임 설정");
+        setTitle("윷놀이 게임 설정 - Swing");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(400, 300);
-        setLocationRelativeTo(null); // 화면 중앙에 표시
+        setLocationRelativeTo(null);
 
         // 컴포넌트 초기화
         initComponents();
@@ -106,7 +106,8 @@ public class GameSetupFrame extends JFrame {
         GameSettings settings = new GameSettings(playerCount, pieceCount, boardType);
 
         // 게임 컨트롤러 생성
-        GameController controller = new GameController(settings);
+        SwingGameController controller = new SwingGameController();
+        controller.initializeGame(settings);
 
         // 게임 화면 생성 및 표시
         GameFrame gameFrame = new GameFrame(controller);
