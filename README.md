@@ -63,7 +63,7 @@ java -jar target/yootnori-swing.jar
 java --module-path /path/to/javafx/lib --add-modules javafx.controls,javafx.fxml -jar target/yootnori-javafx.jar
 ```
 
-## 🏗️ 프로젝트 구조
+## 프로젝트 구조
 
 ```
 src/main/java/org/example/
@@ -97,7 +97,7 @@ src/main/java/org/example/
         └── YutInfoPane.java
 ```
 
-## 🎯 게임 플레이 방법
+## 플레이 방법
 
 ### 게임 설정
 1. 게임 시작 시 보드 형태 선택 (사각형/오각형/육각형)
