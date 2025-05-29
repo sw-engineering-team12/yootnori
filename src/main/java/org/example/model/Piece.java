@@ -21,8 +21,7 @@ public class Piece {
 
     /**
      * 말 움직임
-     * @param newPlace 새 위치
-     * @return 이동 성공 여부
+     * 도착 여부 확인
      */
     public boolean moveTo(Place newPlace) {
         // 업혀있는 말은 직접 이동할 수 없음

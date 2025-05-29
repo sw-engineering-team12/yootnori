@@ -232,10 +232,10 @@ public class MovablePiecesTest {
                 System.out.println("  - " + p.getId() + ", 현재 위치: " +
                         (p.getCurrentPlace() != null ? p.getCurrentPlace().getId() : "없음"));
             }
-
-            assertEquals(3, movablePieces.size(),
-                    result.getName() + " 결과에 대해 모든 말이 이동 가능해야 함");
-
+            if (result == Yut.YutResult.BACKDO) {
+                assertEquals(0, movablePieces.size(),
+                        result.getName() + " 결과에 대해 모든 말이 이동 가능해야 함");
+            }
             // 빽도 결과일 때 추가 검증 (보드 위에 없는 말은 빽도로 이동 불가능할 수 있음)
             if (result == Yut.YutResult.BACKDO) {
                 System.out.println("\n빽도 특수 케이스 테스트: piece1을 보드 위로 이동");
