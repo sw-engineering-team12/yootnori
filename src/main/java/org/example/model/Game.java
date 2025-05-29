@@ -882,7 +882,12 @@ public class Game {
     public boolean hasExtraTurn() {
         return hasExtraTurn;
     }
-
+    /**
+     * 테스트를 위한 추가턴 설정 코드
+     */
+    void setHasExrtraTurnFalse(){
+        this.hasExtraTurn = false;
+    }
     /**
      * 게임 로그 반환
      * @return 게임 로그 목록

@@ -207,6 +207,7 @@ public class Board {
         outerPath[5].setJunction(true);
         outerPath[10].setJunction(true);
         outerPath[15].setJunction(true);
+        outerPath[20].setJunction(true);
 
         // 특별 경로 연결 및 역방향 참조 설정
         outerPath[5].setSpecialNextPlace(C1);
@@ -313,6 +314,7 @@ public class Board {
         outerPath[10].setJunction(true);
         outerPath[15].setJunction(true);
         outerPath[20].setJunction(true);
+        outerPath[25].setJunction(true);
 
         // 특별 경로 연결 및 역방향 참조 설정
         outerPath[5].setSpecialNextPlace(C1);
@@ -457,19 +459,23 @@ public class Board {
                 return currentPlace;
             }
 
-            // 도착점(E)에서는 보드 타입에 따라 적절한 위치로
+            // 도착점(E)에서는 previousPlace 참조를 사용하거나 보드 타입에 따라 적절한 위치로
             if (currentPlace.getId().equals("E")) {
-                // previousPlace 참조를 사용하면 이 분기는 필요 없을 수 있음
-                // 호환성을 위해 유지
-                switch (boardType) {
-                    case SQUARE:
-                        return getPlaceById("19");
-                    case PENTAGON:
-                        return getPlaceById("24");
-                    case HEXAGON:
-                        return getPlaceById("29");
-                    default:
-                        return currentPlace; // 기본값
+                // previousPlace 참조가 있으면 사용
+                if (currentPlace.getPreviousPlace() != null) {
+                    return currentPlace.getPreviousPlace();
+                } else {
+                    // previousPlace가 없으면 보드 타입에 따라 마지막 외곽 위치로
+                    switch (boardType) {
+                        case SQUARE:
+                            return getPlaceById("19");
+                        case PENTAGON:
+                            return getPlaceById("24");
+                        case HEXAGON:
+                            return getPlaceById("29");
+                        default:
+                            return currentPlace; // 기본값
+                    }
                 }
             }
 
@@ -477,9 +483,9 @@ public class Board {
             if (currentPlace.getPreviousPlace() != null) {
                 return currentPlace.getPreviousPlace();
             } else {
-                // 이전 위치 참조가 없는 경우 ID 기반 대체 (하위 호환성)
-                // 이 부분은 모든 위치에 previousPlace가 설정된 경우 필요 없음
-                return getPlaceById(String.valueOf(Integer.parseInt(currentPlace.getId()) - 1));
+                // 이전 위치 참조가 없는 경우, 현재 위치에 머무름
+                // (모든 위치에 previousPlace가 설정되어 있어야 하지만, 안전장치)
+                return currentPlace;
             }
         }
 
@@ -508,6 +514,7 @@ public class Board {
 
         return currentPos;
     }
+
     /**
      * 두 위치 간의 최단 이동 경로 계산
      * (이 기능은 UI에서 경로 표시에 활용할 수 있음)

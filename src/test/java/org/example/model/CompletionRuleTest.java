@@ -108,6 +108,7 @@ public class CompletionRuleTest {
 
         // 윷 던지기 결과를 도(1칸)로 설정
         Yut.YutResult result = Yut.YutResult.DO;
+        game.setSpecificYutResult(result); // 이 줄 추가
 
         // E에서 FE로 이동
         Place destination = game.movePiece(piece, result);
@@ -131,6 +132,7 @@ public class CompletionRuleTest {
 
         // 충분한 이동 거리를 가진 윷 결과 (모: 5칸)로 설정
         Yut.YutResult result = Yut.YutResult.MO;
+        game.setSpecificYutResult(result); // 이 줄 추가
 
         // 이동 실행
         Place destination = game.movePiece(piece, result);
@@ -154,6 +156,7 @@ public class CompletionRuleTest {
 
         // 윷 던지기 결과를 개(2칸)로 설정 - E를 지나 FE로 이동해야 함
         Yut.YutResult result = Yut.YutResult.GAE;
+        game.setSpecificYutResult(result); // 이 줄 추가
 
         // 이동 실행
         Place destination = game.movePiece(piece, result);
@@ -162,4 +165,5 @@ public class CompletionRuleTest {
         assertEquals("FE", destination.getId(), "E를 넘어 FE에 도달해야 함");
         assertTrue(piece.isCompleted(), "FE 위치에 도달한 후 말이 완주되어야 함");
     }
+
 }

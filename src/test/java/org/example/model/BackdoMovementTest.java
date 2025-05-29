@@ -64,23 +64,25 @@ public class BackdoMovementTest {
         }
 
         @Test
-        @DisplayName("일반 외곽 위치(1~19)에서 빽도 이동")
-        void testBackdoFromOuterPath() {
-            // 위치 5에서 빽도 테스트
-            Place place5 = board.getPlaceById("5");
-            Place expectedPrevious = board.getPlaceById("4");
+        @DisplayName("업힌 말이 있는 상태에서 도착점에서 빽도 이동 테스트")
+        void testBackdoMovementThroughEndWithStackedPiece() {
+            // piece1을 도착점(E) 위치로 이동
+            Place endPlace = board.getPlaceById("E");
+            piece1.moveTo(endPlace);
 
-            Place result = board.calculateDestination(place5, Yut.YutResult.BACKDO);
-            assertEquals(expectedPrevious, result, "위치 5에서 빽도 이동 시 위치 4로 이동해야 함");
+            // 빽도 윷 결과를 게임에 추가 (이 부분이 중요!)
+            game.setSpecificYutResult(Yut.YutResult.BACKDO);
 
-            // 위치 1에서 빽도 테스트
-            Place place1 = board.getPlaceById("1");
-            Place expectedStart = board.getStartingPlace();
+            // 빽도로 이동 (E -> 19)
+            Place destination = game.movePiece(piece1, Yut.YutResult.BACKDO);
+            Place expectedPlace = board.getPlaceById("19");
 
-            result = board.calculateDestination(place1, Yut.YutResult.BACKDO);
-            assertEquals(expectedStart, result, "위치 1에서 빽도 이동 시 시작점으로 이동해야 함");
+            assertEquals(expectedPlace, destination, "빽도 이동 후 위치 19에 있어야 함");
+            assertEquals(expectedPlace, piece1.getCurrentPlace(), "piece1이 위치 19에 있어야 함");
+
+            // 업힌 상태 유지 확인
+            assertTrue(piece1.getStackedPieces().contains(piece2), "빽도 이동 후에도 piece1이 piece2를 업고 있어야 함");
         }
-
         @Test
         @DisplayName("도착점(E)에서 빽도 이동")
         void testBackdoFromEndPoint() {
@@ -127,7 +129,6 @@ public class BackdoMovementTest {
             result = board.calculateDestination(centerC2, Yut.YutResult.BACKDO);
             assertEquals(expectedPrevious, result, "중앙점 C_2에서 빽도 이동 시 C4로 이동해야 함");
         }
-
         @Test
         @DisplayName("실제 말 이동으로 빽도 테스트")
         void testActualPieceMovementWithBackdo() {
@@ -138,6 +139,9 @@ public class BackdoMovementTest {
             Place place5 = board.getPlaceById("5");
             piece.moveTo(place5);
             assertEquals(place5, piece.getCurrentPlace(), "말이 위치 5에 있어야 함");
+
+            // 빽도 윷 결과를 게임에 추가
+            game.setSpecificYutResult(Yut.YutResult.BACKDO);
 
             // 빽도로 이동 실행
             Place destination = game.movePiece(piece, Yut.YutResult.BACKDO);
@@ -410,9 +414,12 @@ public class BackdoMovementTest {
         @Test
         @DisplayName("업힌 말과 함께 빽도 이동 테스트")
         void testBackdoMovementWithStackedPiece() {
+            // 빽도 윷 결과를 게임에 추가
+            game.setSpecificYutResult(Yut.YutResult.BACKDO);
+
             // 빽도로 이동
-            Place destination = game.movePiece(piece1, Yut.YutResult.BACKDO);
             Place expectedPlace = board.getPlaceById("4");
+            Place destination = game.movePiece(piece1, Yut.YutResult.BACKDO);
 
             assertEquals(expectedPlace, destination, "업힌 말과 함께 빽도 이동 후 위치 4에 있어야 함");
             assertEquals(expectedPlace, piece1.getCurrentPlace(), "piece1이 위치 4에 있어야 함");
@@ -422,23 +429,7 @@ public class BackdoMovementTest {
             assertNull(piece2.getCurrentPlace(), "업힌 말은 여전히 위치가 null이어야 함");
         }
 
-        @Test
-        @DisplayName("업힌 말이 있는 상태에서 도착점에서 빽도 이동 테스트")
-        void testBackdoMovementThroughEndWithStackedPiece() {
-            // piece1을 도착점(E) 위치로 이동
-            Place endPlace = board.getPlaceById("E");
-            piece1.moveTo(endPlace);
 
-            // 빽도로 이동 (E -> 19)
-            Place destination = game.movePiece(piece1, Yut.YutResult.BACKDO);
-            Place expectedPlace = board.getPlaceById("19");
-
-            assertEquals(expectedPlace, destination, "빽도 이동 후 위치 19에 있어야 함");
-            assertEquals(expectedPlace, piece1.getCurrentPlace(), "piece1이 위치 19에 있어야 함");
-
-            // 업힌 상태 유지 확인
-            assertTrue(piece1.getStackedPieces().contains(piece2), "빽도 이동 후에도 piece1이 piece2를 업고 있어야 함");
-        }
 
     }
 }

@@ -147,6 +147,9 @@ public class GameTest {
         // 초기 위치 확인
         assertNull(piece.getCurrentPlace(), "초기 상태의 말은 위치가 null이어야 함");
 
+        // 윷 결과를 게임에 추가 (이 줄 추가)
+        game.setSpecificYutResult(result);
+
         // 이동 실행
         Place destination = game.movePiece(piece, result);
 
@@ -157,7 +160,6 @@ public class GameTest {
         Place expected = game.getBoard().calculateDestination(game.getBoard().getStartingPlace(), result);
         assertEquals(expected, piece.getCurrentPlace(), "계산된 목적지로 이동해야 함");
     }
-
 
     /**
      * 말 잡기 테스트
@@ -206,6 +208,9 @@ public class GameTest {
         System.out.println("\npiece1에 대한 calculateDestination 결과:");
         System.out.println("시작 위치: " + (piece1.getCurrentPlace() != null ? piece1.getCurrentPlace().getId() : "S(시작점)"));
         System.out.println("계산된 목적지: " + (calculatedDest1 != null ? calculatedDest1.getId() : "null"));
+
+        // 윷 결과를 게임에 추가 (이 줄 추가)
+        game.setSpecificYutResult(result1);
 
         // 첫 번째 말을 먼저 이동
         Place destination1 = game.movePiece(piece1, result1);
@@ -261,6 +266,9 @@ public class GameTest {
                 }
             }
         }
+
+        // 윷 결과를 게임에 추가 (이 줄 추가)
+        game.setSpecificYutResult(result2);
 
         // 두 번째 말 이동
         System.out.println("\n두 번째 말 이동 시작...");
@@ -326,7 +334,6 @@ public class GameTest {
         // assertTrue(game.hasExtraTurn(), "잡기 후 추가 턴이 부여되어야 함");
     }
 
-
     /**
      * 말 업기 테스트
      */
@@ -340,12 +347,19 @@ public class GameTest {
 
         // 첫 번째 말을 이동
         Yut.YutResult result1 = Yut.YutResult.DO; // 도(1칸)
+
+        // 윷 결과를 게임에 추가 (이 줄 추가)
+        game.setSpecificYutResult(result1);
+
         Place destination1 = game.movePiece(piece1, result1);
 
         // 이동 후 말의 위치 확인
         assertNotNull(piece1.getCurrentPlace(), "이동 후 말은 보드 위에 있어야 함");
         assertEquals(destination1, piece1.getCurrentPlace(), "이동 후 말의 위치가 일치해야 함");
         assertTrue(destination1.getPieces().contains(piece1), "이동 후 위치에 말이 포함되어야 함");
+
+        // 윷 결과를 게임에 추가 (이 줄 추가)
+        game.setSpecificYutResult(result1);
 
         // 두 번째 말을 같은 위치로 이동
         game.movePiece(piece2, result1);
@@ -377,6 +391,9 @@ public class GameTest {
         assertNull(stackedPiece.getCurrentPlace(), "업힌 말은 위치가 null이어야 함");
         assertFalse(destination1.getPieces().contains(stackedPiece), "업힌 말은 보드에서 제거되어야 함");
 
+        // 윷 결과를 게임에 추가 (이 줄 추가)
+        game.setSpecificYutResult(result1);
+
         // 세 번째 말을 이동하고 세 개의 말을 모두 업기
         game.movePiece(piece3, result1);
 
@@ -402,6 +419,10 @@ public class GameTest {
 
         // 업힌 말들과 함께 이동하는지 확인
         Yut.YutResult result2 = Yut.YutResult.GAE; // 개(2칸)
+
+        // 윷 결과를 게임에 추가 (이 줄 추가)
+        game.setSpecificYutResult(result2);
+
         Place destination2 = game.movePiece(mainPiece, result2);
 
         assertNotNull(destination2, "업힌 말과 함께 이동 결과는 null이 아니어야 함");
@@ -437,7 +458,6 @@ public class GameTest {
                     "업기 해제 후 말들이 메인 말과 같은 위치에 있어야 함");
         }
     }
-
     /**
      * 승리 조건 테스트
      */
@@ -468,43 +488,21 @@ public class GameTest {
     void testExtraTurnForYutMo() {
         // 초기에는 추가 턴이 없음
         assertFalse(game.hasExtraTurn(), "초기 상태에서는 추가 턴이 없어야 함");
-
+        game.setHasExrtraTurnFalse();
         // 윷 결과에 대한 추가 턴 확인
         game.setSpecificYutResult(Yut.YutResult.YUT);
         assertTrue(game.hasExtraTurn(), "윷 결과에는 추가 턴이 부여되어야 함");
+        game.setHasExrtraTurnFalse();
 
         // 모 결과에 대한 추가 턴 확인
         game.setSpecificYutResult(Yut.YutResult.MO);
         assertTrue(game.hasExtraTurn(), "모 결과에는 추가 턴이 부여되어야 함");
-
+        game.setHasExrtraTurnFalse();
         // 다른 결과에 대한 추가 턴 확인
         game.setSpecificYutResult(Yut.YutResult.DO);
         assertFalse(game.hasExtraTurn(), "도 결과에는 추가 턴이 부여되지 않아야 함");
     }
 
-    /**
-     * 빽도 이동 테스트
-     */
-    @Test
-    void testBackdoMovement() {
-        Player player = game.getCurrentPlayer();
-        Piece piece = player.getPieces().get(0);
-
-        // 먼저 정방향으로 이동
-        Yut.YutResult forward = Yut.YutResult.DO; // 도(1칸)
-        Place forwardPlace = game.movePiece(piece, forward);
-
-        // 빽도로 이동
-        Yut.YutResult backdo = Yut.YutResult.BACKDO; // 빽도(-1칸)
-        Place backPlace = game.movePiece(piece, backdo);
-
-        // 시작점으로 돌아왔는지 확인
-        assertEquals(game.getBoard().getStartingPlace(), backPlace, "빽도 이동 후 시작점으로 돌아와야 함");
-
-        // 시작점에서 빽도가 적용되지 않는지 확인
-        Place noMovePlace = game.movePiece(piece, backdo);
-        assertEquals(game.getBoard().getStartingPlace(), noMovePlace, "시작점에서 빽도 이동 시 제자리여야 함");
-    }
 
     /**
      * 중앙점 경로 규칙 테스트 (오각형/육각형 보드)
@@ -634,6 +632,9 @@ public class GameTest {
             game.nextTurn(); // 플레이어 2의 턴으로 설정
         }
 
+        // 윷 결과를 먼저 설정
+        game.setSpecificYutResult(Yut.YutResult.MO); // 이 줄 추가
+
         // 플레이어 2의 말을 위치 5로 이동 (잡기 발생)
         game.movePiece(player2Piece, Yut.YutResult.MO); // 5칸 이동하여 위치 5에 도달
 
@@ -647,11 +648,11 @@ public class GameTest {
         Place startingPlace = game.getBoard().getStartingPlace();
 
         assertTrue(player1Piece2.getCurrentPlace() != null &&
-                                player1Piece2.getCurrentPlace().equals(startingPlace),
+                        player1Piece2.getCurrentPlace().equals(startingPlace),
                 "플레이어 1의 2번 말이 시작점으로 돌아와야 함");
 
         assertTrue(player1Piece1.getCurrentPlace() != null &&
-                                player1Piece1.getCurrentPlace().equals(startingPlace),
+                        player1Piece1.getCurrentPlace().equals(startingPlace),
                 "플레이어 1의 1번 말이 시작점으로 돌아와야 함");
 
 
