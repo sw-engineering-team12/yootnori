@@ -152,7 +152,6 @@ public class Board {
         center1.setSpecialNextPlace(C7);
         C7.setPreviousPlace(center1); // 특별 경로의 역방향 참조 설정
     }
-
     /**
      * 오각형 보드 초기화 메서드
      * 오각형 구조의 윷놀이판을 생성합니다.
@@ -258,7 +257,6 @@ public class Board {
         center2.setNextPlace(C9);
         // C9은 이미 역방향 참조가 설정됨
     }
-
     /**
      * 육각형 보드 초기화 메서드
      * 육각형 구조의 윷놀이판을 생성합니다.
@@ -374,7 +372,6 @@ public class Board {
         center2.setNextPlace(C11);
         // C11은 이미 역방향 참조가 설정됨
     }
-
     /**
      * 위치 생성 및 맵에 추가하는 유틸리티 메서드
      */
@@ -515,30 +512,5 @@ public class Board {
         return currentPos;
     }
 
-    /**
-     * 두 위치 간의 최단 이동 경로 계산
-     * (이 기능은 UI에서 경로 표시에 활용할 수 있음)
-     * @param from 시작 위치
-     * @param to 도착 위치
-     * @return 경로 상의 위치 목록
-     */
-    public List<Place> calculatePath(Place from, Place to) {
-        List<Place> path = new ArrayList<>();
-        path.add(from);
-
-        // 간단한 구현: 다음 위치로 계속 이동하면서 목적지에 도달하는지 확인
-        // 실제 구현에서는 BFS나 다익스트라 알고리즘을 사용하여 최단 경로 탐색 필요
-        Place current = from;
-        while (current != to && path.size() < 50) { // 무한 루프 방지
-            if (current.getNextPlace() != null) {
-                current = current.getNextPlace();
-                path.add(current);
-            } else {
-                break;
-            }
-        }
-
-        return path;
-    }
 
 }
