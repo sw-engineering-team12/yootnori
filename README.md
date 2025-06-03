@@ -67,30 +67,38 @@ java --module-path /path/to/javafx/lib --add-modules javafx.controls,javafx.fxml
 
 ```
 src/main/java/org/example/
-├── Main.java                     # 메인 진입점
-├── YutGameApp.java              # Swing 앱 시작점
-├── YutGameFXApp.java            # JavaFX 앱 시작점
-├── controller/                   # 게임 컨트롤러
-│   ├── AbstractGameController.java
-│   ├── GameController.java
-│   ├── swing/SwingGameController.java
-│   └── javafx/FXGameController.java
-├── model/                       # 게임 모델 (비즈니스 로직)
-│   ├── Game.java               # 게임 상태 관리
-│   ├── Board.java              # 보드 구조
-│   ├── Player.java             # 플레이어
-│   ├── Piece.java              # 말
-│   ├── Place.java              # 보드 위치
-│   ├── Yut.java                # 윷 던지기
-│   ├── GameSettings.java       # 게임 설정
-│   └── GameLog.java            # 게임 로그
-└── view/                       # UI 계층
-    ├── swing/                  # Swing UI 컴포넌트
+├── Main.java                      # 메인 진입점 (UI 분기 처리)
+├── YutGameApp.java                # Swing 앱 시작점
+├── YutGameFXApp.java              # JavaFX 앱 시작점
+
+├── controller/                    # 게임 컨트롤러 계층
+│   ├── AbstractGameController.java  # 컨트롤러 추상 클래스 (공통 로직)
+│   ├── GameController.java          # 컨트롤러 인터페이스
+│   ├── swing/                      # Swing 전용 컨트롤러
+│   │   └── SwingGameController.java
+│   └── javafx/                     # JavaFX 전용 컨트롤러
+│       └── FXGameController.java
+
+├── model/                         # 게임 모델 (비즈니스 로직 계층)
+│   ├── Game.java                    # 게임 상태/흐름 관리 (중앙 제어 클래스)
+│   ├── Board.java                   # 보드 구조/경로 관리
+│   ├── Player.java                  # 플레이어
+│   ├── Piece.java                   # 말 (업기/잡기 지원)
+│   ├── Place.java                   # 보드 위치 노드
+│   ├── Yut.java                     # 윷 결과 생성기
+│   ├── YutResult.java (enum)        # 윷 결과 Enum
+│   ├── GameSettings.java            # 게임 설정 (플레이어 수/말 수/보드 타입)
+│   ├── GameLog.java                 # 게임 로그 기록
+│   ├── GameInteractionService.java  # 말 상호작용 처리 서비스 (업기/잡기)
+│   └── TurnService.java             # 턴 관리 서비스 (추가 턴, 윷 결과 처리)
+
+└── view/                          # UI 계층 (View)
+    ├── swing/                      # Swing UI 컴포넌트
     │   ├── GameSetupFrame.java
     │   ├── GameFrame.java
     │   ├── GameBoardPanel.java
     │   └── YutInfoPanel.java
-    └── javafx/                 # JavaFX UI 컴포넌트
+    └── javafx/                     # JavaFX UI 컴포넌트
         ├── GameSetupScene.java
         ├── GameScene.java
         ├── GameBoardPane.java
