@@ -213,6 +213,8 @@ public class Game {
         if (lastYutResult == Yut.YutResult.YUT || lastYutResult == Yut.YutResult.MO) {
             hasExtraTurn = true;
             addToGameLog(getCurrentPlayer().getName() + "에게 추가 턴이 부여되었습니다. (윷/모)");
+        }else{
+            hasExtraTurn = false;
         }
 
         // 윷 결과 저장
@@ -725,50 +727,49 @@ public class Game {
         }
         return false;
     }
-
     /**
-     * 턴 종료 시 호출되는 메소드
+     * 턴 종료 시 호출되는 메소드 - 수정된 버전
      * 추가 턴이 없거나, 추가 턴이 있지만 모든 윷 결과를 사용한 경우 다음 플레이어로 턴 전환
      */
     public void endTurnIfNoExtraTurn() {
-        // 추가 턴이 있고, 윷 결과가 비어있는 경우 (상대방 말을 잡아서 추가 턴을 얻은 경우)
+        // 경우 1: 추가 턴이 있고, 윷 결과가 비어있는 경우
         if (hasExtraTurn && pendingYutResults.isEmpty()) {
-            // 추가 턴에서 던진 윷 결과를 모두 사용했거나, 상대방 말 잡기로 인한 추가 턴이 이미 사용된 경우
-            if (isExtraTurnThrow || captureExtraTurnUsed) {
-                // 추가 턴 사용 완료 - 다음 플레이어로 턴 전환
+            // 1-1: 상대방 말을 잡아서 추가 턴을 얻은 경우
+            if (captureExtraTurnUsed) {
+                // 잡기로 얻은 추가 턴이 이미 사용되었으므로 턴 종료
                 hasExtraTurn = false;
                 isExtraTurnThrow = false;
                 captureExtraTurnUsed = false;
                 nextTurn();
                 return;
             }
-            
-            // 아직 추가 턴을 사용하지 않은 경우 (윷/모 결과로 얻은 추가 턴)
-            addToGameLog(getCurrentPlayer().getName() + "의 추가 턴이 부여되었습니다. 윷을 던지세요.");
+
+            // 1-2: 윷/모로 추가 턴을 얻었거나, 잡기 추가 턴을 아직 사용하지 않은 경우
+            // → 현재 플레이어가 계속해서 윷을 던져야 함
+            addToGameLog(getCurrentPlayer().getName() + "의 추가 턴입니다. 윷을 던지세요.");
             return;
         }
-        
-        // 추가 턴이 없는 경우, 다음 플레이어로 턴 전환
+
+        // 경우 2: 추가 턴이 없는 경우 - 다음 플레이어로 턴 전환
         if (!hasExtraTurn) {
             nextTurn();
             pendingYutResults.clear();
-        } 
-        // 추가 턴이 있지만, 모든 윷 결과를 사용한 경우 (윷/모가 나온 후 모든 결과를 사용한 경우)
-        else if (pendingYutResults.isEmpty()) {
-            // 이전 수정: 추가 턴을 정상적으로 사용한 경우에도 hasExtraTurn이 true로 유지됨
-            // 이 부분은 이제 위의 if 조건문에서 처리되므로 여기까지 코드가 오지 않을 것임
-            // 예상치 못한 상황을 대비하여 남겨둠
-            hasExtraTurn = false;
-            isExtraTurnThrow = false;
-            nextTurn();
-            addToGameLog(getCurrentPlayer().getName() + "의 턴이 시작되었습니다.");
-        } 
-        // 추가 턴이 있고, 윷 결과가 남아있는 경우
-        else {
-            addToGameLog(getCurrentPlayer().getName() + "의 추가 턴이 남아있습니다. 윷 결과: " + 
-                    formatPendingResults());
+            return;
         }
+
+        // 경우 3: 추가 턴이 있고, 아직 윷 결과가 남아있는 경우
+        // → 현재 플레이어가 계속 진행
+        addToGameLog(getCurrentPlayer().getName() + "의 추가 턴이 남아있습니다. 윷 결과: " +
+                formatPendingResults());
     }
+
+    /**
+     * 추가 턴 상태를 확인하는 헬퍼 메서드
+     */
+    public boolean shouldContinueExtraTurn() {
+        return hasExtraTurn && (pendingYutResults.isEmpty() && !captureExtraTurnUsed);
+    }
+
     
     /**
      * 저장된 윷 결과 목록을 문자열로 변환
