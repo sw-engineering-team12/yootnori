@@ -9,41 +9,39 @@ import java.util.HashMap;
  * 윷놀이 게임의 전체 상태를 관리하는 모델 클래스
  * MVC 아키텍처에서 Model 역할을 담당
  * GameInteractionService를 사용하여 말 상호작용 로직 분리
+ * TurnService를 사용하여 턴 관리 로직 분리
  */
 public class Game {
     private List<Player> players;
-    private int currentTurnIndex;
     private Board board;
     private Yut yut;
     private GameSettings gameSettings;
     private boolean isGameFinished;
     private Player winner;
     private Yut.YutResult lastYutResult;
-    private boolean hasExtraTurn;
     private List<String> gameLog;
     private List<Yut.YutResult> pendingYutResults;
-    private boolean captureExtraTurnUsed;
-    private boolean isExtraTurnThrow;
 
     // 말 상호작용 서비스 (잡기/업기 로직 분리)
     private GameInteractionService interactionService;
+    // 턴 관리 서비스 (턴 전환 로직 분리)
+    private TurnService turnService;
 
     /**
      * 기본 생성자
      */
     public Game() {
         this.players = new ArrayList<>();
-        this.currentTurnIndex = 0;
         this.yut = new Yut();
         this.isGameFinished = false;
-        this.hasExtraTurn = false;
         this.gameLog = new ArrayList<>();
         this.pendingYutResults = new ArrayList<>();
-        this.captureExtraTurnUsed = false;
-        this.isExtraTurnThrow = false;
 
         // 상호작용 서비스 초기화
         this.interactionService = new GameInteractionService();
+
+        // 턴 서비스 초기화
+        this.turnService = new TurnService(pendingYutResults, gameLog);
     }
 
     /**
@@ -52,14 +50,13 @@ public class Game {
      */
     public void initialize(GameSettings settings) {
         this.gameSettings = settings;
-        this.currentTurnIndex = 0;
         this.isGameFinished = false;
         this.winner = null;
-        this.hasExtraTurn = false;
         this.gameLog.clear();
         this.pendingYutResults.clear();
-        this.captureExtraTurnUsed = false;
-        this.isExtraTurnThrow = false;
+
+        // 턴 서비스 초기화
+        this.turnService.initializeTurn();
 
         // 보드 초기화
         this.board = new Board(settings.getBoardType());
@@ -89,27 +86,14 @@ public class Game {
      * @return 현재 턴 플레이어
      */
     public Player getCurrentPlayer() {
-        return players.get(currentTurnIndex);
+        return players.get(turnService.getCurrentTurnIndex());
     }
 
     /**
      * 다음 턴으로 전환
      */
     public void nextTurn() {
-        if (!hasExtraTurn) {
-            currentTurnIndex = (currentTurnIndex + 1) % players.size();
-            addToGameLog(getCurrentPlayer().getName() + "의 턴입니다.");
-        } else {
-            hasExtraTurn = false;
-            captureExtraTurnUsed = false;
-            addToGameLog(getCurrentPlayer().getName() + "의 추가 턴입니다.");
-        }
-
-        // 디버깅: 턴 시작 시 모든 플레이어의 말 상태 출력
-        addToGameLog("[디버그] === 턴 시작 시 게임 상태 ===");
-        for (Player player : players) {
-            debugPrintPlayerPieces(player);
-        }
+        turnService.nextTurn(players);
     }
 
     /**
@@ -117,29 +101,17 @@ public class Game {
      * @return 윷 결과
      */
     public Yut.YutResult throwYut() {
-        if (!hasExtraTurn) {
-            pendingYutResults.clear();
-            isExtraTurnThrow = false;
-        } else {
-            isExtraTurnThrow = true;
-        }
-
-        if (hasExtraTurn && pendingYutResults.isEmpty()) {
-            captureExtraTurnUsed = true;
-        }
+        turnService.prepareForYutThrow();
 
         lastYutResult = yut.throwYut();
         addToGameLog(getCurrentPlayer().getName() + "이(가) 윷을 던져 " +
                 lastYutResult.getName() + "(" + lastYutResult.getMoveCount() + "칸)가 나왔습니다.");
 
-        if (lastYutResult == Yut.YutResult.YUT || lastYutResult == Yut.YutResult.MO) {
-            hasExtraTurn = true;
-            addToGameLog(getCurrentPlayer().getName() + "에게 추가 턴이 부여되었습니다. (윷/모)");
-        }else{
-            hasExtraTurn = false;
-        }
+        turnService.processYutResult(lastYutResult, getCurrentPlayer());
 
-        pendingYutResults.add(lastYutResult);
+        // 이동 가능한 말이 있는지 확인
+        checkMovablePieces();
+
         return lastYutResult;
     }
 
@@ -149,27 +121,14 @@ public class Game {
      * @return 지정된 윷 결과
      */
     public Yut.YutResult setSpecificYutResult(Yut.YutResult result) {
-        if (!hasExtraTurn) {
-            pendingYutResults.clear();
-            isExtraTurnThrow = false;
-        } else {
-            isExtraTurnThrow = true;
-        }
-
-        if (hasExtraTurn && pendingYutResults.isEmpty()) {
-            captureExtraTurnUsed = true;
-        }
+        turnService.prepareForYutThrow();
 
         lastYutResult = result;
         addToGameLog(getCurrentPlayer().getName() + "이(가) " +
                 result.getName() + "(" + result.getMoveCount() + "칸)로 지정했습니다.");
 
-        if (result == Yut.YutResult.YUT || result == Yut.YutResult.MO) {
-            hasExtraTurn = true;
-            addToGameLog(getCurrentPlayer().getName() + "에게 추가 턴이 부여되었습니다. (윷/모)");
-        }
+        turnService.processYutResult(result, getCurrentPlayer());
 
-        pendingYutResults.add(result);
         return result;
     }
 
@@ -228,7 +187,7 @@ public class Game {
                 "으로 " + result.getName() + "(" + result.getMoveCount() + "칸) 만큼 이동했습니다.");
 
         // 사용한 윷 결과 제거
-        pendingYutResults.remove(result);
+        turnService.useYutResult(result);
 
         // 상호작용 처리 (GameInteractionService 사용)
         handlePieceInteractions(piece, destination);
@@ -250,9 +209,7 @@ public class Game {
                 // 잡기 발생 시 추가 턴 부여
                 Player currentPlayer = getCurrentPlayer();
                 if (piece.getPlayer().equals(currentPlayer)) {
-                    hasExtraTurn = true;
-                    captureExtraTurnUsed = false;
-                    addToGameLog(currentPlayer.getName() + "에게 추가 턴이 부여되었습니다. (중심점 잡기)");
+                    turnService.grantCaptureExtraTurn(currentPlayer);
                 }
                 return; // 잡기가 발생하면 업기 처리 안함
             }
@@ -270,9 +227,7 @@ public class Game {
                 // 잡기 후 추가 턴 부여
                 Player currentPlayer = getCurrentPlayer();
                 if (piece.getPlayer().equals(currentPlayer)) {
-                    hasExtraTurn = true;
-                    captureExtraTurnUsed = false;
-                    addToGameLog(currentPlayer.getName() + "에게 추가 턴이 부여되었습니다. (잡기)");
+                    turnService.grantCaptureExtraTurn(currentPlayer);
                 }
             }
         }
@@ -282,33 +237,6 @@ public class Game {
         }
     }
 
-    /**
-     * 말이 다른 플레이어의 말을 잡을 수 있는지 확인 (서비스로 위임)
-     * @param place 위치
-     * @return 잡기 가능 여부
-     */
-    public boolean isCapture(Place place) {
-        return interactionService.isCapture(place, getCurrentPlayer());
-    }
-
-    /**
-     * 말이 다른 플레이어의 말을 잡음 (서비스로 위임)
-     * @param capturingPiece 잡는 말
-     * @return 잡기 성공 여부
-     */
-    public boolean applyCapture(Piece capturingPiece) {
-        boolean result = interactionService.applyCapture(capturingPiece, board, gameLog);
-        if (result) {
-            // 잡기 후 추가 턴 부여
-            Player currentPlayer = getCurrentPlayer();
-            if (capturingPiece.getPlayer().equals(currentPlayer)) {
-                hasExtraTurn = true;
-                captureExtraTurnUsed = false;
-                addToGameLog(currentPlayer.getName() + "에게 추가 턴이 부여되었습니다. (잡기)");
-            }
-        }
-        return result;
-    }
 
     /**
      * 같은 플레이어의 말 업기 (서비스로 위임)
@@ -327,34 +255,6 @@ public class Game {
      */
     public boolean checkCenterStacking(Piece piece) {
         return interactionService.checkCenterStacking(piece, board, gameLog);
-    }
-
-    /**
-     * 중심점 간의 잡기를 처리하는 메서드 (서비스로 위임)
-     * @param piece 현재 이동한 말
-     * @return 잡기가 발생했으면 true, 아니면 false
-     */
-    public boolean checkCenterCapture(Piece piece) {
-        boolean result = interactionService.checkCenterCapture(piece, board, gameLog);
-        if (result) {
-            // 잡기 후 추가 턴 부여
-            Player currentPlayer = getCurrentPlayer();
-            if (piece.getPlayer().equals(currentPlayer)) {
-                hasExtraTurn = true;
-                captureExtraTurnUsed = false;
-                addToGameLog(currentPlayer.getName() + "에게 추가 턴이 부여되었습니다. (중심점 잡기)");
-            }
-        }
-        return result;
-    }
-
-    /**
-     * 현재 위치에서 같은 플레이어의 모든 말 업기 확인 및 처리 (서비스로 위임)
-     * @param place 현재 위치
-     * @param currentPiece 현재 말
-     */
-    public void checkAndApplyGrouping(Place place, Piece currentPiece) {
-        interactionService.checkAndApplyGrouping(place, currentPiece, board, gameLog);
     }
 
     /**
@@ -386,50 +286,43 @@ public class Game {
      * 턴 종료 시 호출되는 메소드
      */
     public void endTurnIfNoExtraTurn() {
-        // 경우 1: 추가 턴이 있고, 윷 결과가 비어있는 경우
-        if (hasExtraTurn && pendingYutResults.isEmpty()) {
-            // 1-1: 상대방 말을 잡아서 추가 턴을 얻은 경우
-            if (captureExtraTurnUsed) {
-                // 잡기로 얻은 추가 턴이 이미 사용되었으므로 턴 종료
-                hasExtraTurn = false;
-                isExtraTurnThrow = false;
-                captureExtraTurnUsed = false;
-                nextTurn();
-                return;
-            }
-
-            // 1-2: 윷/모로 추가 턴을 얻었거나, 잡기 추가 턴을 아직 사용하지 않은 경우
-            // → 현재 플레이어가 계속해서 윷을 던져야 함
-            addToGameLog(getCurrentPlayer().getName() + "의 추가 턴입니다. 윷을 던지세요.");
-            return;
-        }
-
-        // 경우 2: 추가 턴이 없는 경우 - 다음 플레이어로 턴 전환
-        if (!hasExtraTurn) {
-            nextTurn();
-            pendingYutResults.clear();
-            return;
-        }
-
-        // 경우 3: 추가 턴이 있고, 아직 윷 결과가 남아있는 경우
-        // → 현재 플레이어가 계속 진행
-        addToGameLog(getCurrentPlayer().getName() + "의 추가 턴이 남아있습니다. 윷 결과: " +
-                formatPendingResults());
+        turnService.endTurnIfNoExtraTurn(players);
     }
+
     /**
-     * 저장된 윷 결과 목록을 문자열로 변환
-     * @return 윷 결과 문자열
+     * 이동 가능한 말이 있는지 확인하고, 없으면 턴을 자동 종료
      */
-    private String formatPendingResults() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < pendingYutResults.size(); i++) {
-            Yut.YutResult result = pendingYutResults.get(i);
-            sb.append(result.getName()).append("(").append(result.getMoveCount()).append("칸)");
-            if (i < pendingYutResults.size() - 1) {
-                sb.append(", ");
+    private void checkMovablePieces() {
+        if (!pendingYutResults.isEmpty()) {
+            List<Piece> movablePieces = getMovablePieces();
+            if (movablePieces.isEmpty()) {
+                addToGameLog("이동 가능한 말이 없습니다. 턴을 넘깁니다.");
+                endTurnIfNoExtraTurn();
             }
         }
-        return sb.toString();
+    }
+
+    /**
+     * 현재 턴 플레이어의 이동 가능한 말 목록 반환
+     * @return 이동 가능한 말 목록
+     */
+    public List<Piece> getMovablePieces() {
+        if (pendingYutResults.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        Yut.YutResult firstResult = pendingYutResults.get(0);
+        List<Piece> allPieces = getMovablePieces(getCurrentPlayer(), firstResult);
+        List<Piece> validMovablePieces = new ArrayList<>();
+
+        // 업혀있지 않은 말만 반환
+        for (Piece piece : allPieces) {
+            if (!piece.isCarried()) {
+                validMovablePieces.add(piece);
+            }
+        }
+
+        return validMovablePieces;
     }
 
     /**
@@ -443,81 +336,6 @@ public class Game {
             initialize(gameSettings);
         }
         addToGameLog("게임이 재시작되었습니다.");
-    }
-
-    /**
-     * 디버깅용: 특정 위치의 말 정보 출력
-     */
-    public void debugPrintPlaceInfo(Place place) {
-        if (place == null) {
-            addToGameLog("[디버그] 위치 객체가 null입니다.");
-            return;
-        }
-
-        addToGameLog("=== [디버그] 위치 정보 ===");
-        addToGameLog("위치 ID: " + place.getId());
-        addToGameLog("위치 이름: " + place.getName());
-        addToGameLog("분기점 여부: " + place.isJunction());
-        addToGameLog("중앙점 여부: " + place.isCenter());
-        addToGameLog("시작점 여부: " + place.isStartingPoint());
-        addToGameLog("도착점 여부: " + place.isEndingPoint());
-
-        List<Piece> pieces = place.getPieces();
-        addToGameLog("말 개수: " + pieces.size());
-
-        if (!pieces.isEmpty()) {
-            addToGameLog("--- 말 목록 ---");
-            for (int i = 0; i < pieces.size(); i++) {
-                Piece piece = pieces.get(i);
-                addToGameLog((i+1) + ". ID: " + piece.getId() +
-                        ", 플레이어: " + piece.getPlayer().getName() +
-                        ", 업힌 말 수: " + piece.getStackedPieces().size());
-
-                if (!piece.getStackedPieces().isEmpty()) {
-                    addToGameLog("   업힌 말 목록:");
-                    for (Piece stackedPiece : piece.getStackedPieces()) {
-                        addToGameLog("    - " + stackedPiece.getId() +
-                                " (소유자: " + stackedPiece.getPlayer().getName() + ")");
-                    }
-                }
-            }
-        }
-        addToGameLog("===============");
-    }
-
-    /**
-     * 디버깅용: 플레이어의 모든 말 상태 출력
-     */
-    public void debugPrintPlayerPieces(Player player) {
-        if (player == null) {
-            addToGameLog("[디버그] 플레이어 객체가 null입니다.");
-            return;
-        }
-
-        addToGameLog("=== [디버그] " + player.getName() + "의 말 상태 ===");
-        List<Piece> pieces = player.getPieces();
-        addToGameLog("총 말 개수: " + pieces.size());
-
-        for (Piece piece : pieces) {
-            Place currentPlace = piece.getCurrentPlace();
-            String locationInfo = currentPlace != null ?
-                    (currentPlace.getId() + " (" + currentPlace.getName() + ")") :
-                    "보드에 없음 (업힌 상태 또는 초기 상태)";
-
-            addToGameLog("말 " + piece.getId() + ":");
-            addToGameLog("  위치: " + locationInfo);
-            addToGameLog("  완주 여부: " + piece.isCompleted());
-            addToGameLog("  업힌 말 수: " + piece.getStackedPieces().size());
-
-            if (!piece.getStackedPieces().isEmpty()) {
-                addToGameLog("  업힌 말 목록:");
-                for (Piece stackedPiece : piece.getStackedPieces()) {
-                    addToGameLog("    - " + stackedPiece.getId());
-                }
-            }
-            addToGameLog("-----------");
-        }
-        addToGameLog("===================");
     }
 
     /**
@@ -543,7 +361,7 @@ public class Game {
      * @return 현재 턴 인덱스
      */
     public int getCurrentTurnIndex() {
-        return currentTurnIndex;
+        return turnService.getCurrentTurnIndex();
     }
 
     /**
@@ -594,15 +412,19 @@ public class Game {
         this.lastYutResult = result;
     }
 
+    /**
+     * 추가 턴 강제 해제 (테스트용)
+     */
     public void setHasExrtraTurnFalse(){
-        hasExtraTurn = false;
+        turnService.setHasExtraTransferFalse();
     }
+
     /**
      * 추가 턴 여부 반환
      * @return 추가 턴 여부
      */
     public boolean hasExtraTurn() {
-        return hasExtraTurn;
+        return turnService.hasExtraTurn();
     }
 
     /**
