@@ -128,6 +128,7 @@ public class Game {
                 result.getName() + "(" + result.getMoveCount() + "칸)로 지정했습니다.");
 
         turnService.processYutResult(result, getCurrentPlayer());
+        checkMovablePieces();
 
         return result;
     }
@@ -297,6 +298,7 @@ public class Game {
             List<Piece> movablePieces = getMovablePieces();
             if (movablePieces.isEmpty()) {
                 addToGameLog("이동 가능한 말이 없습니다. 턴을 넘깁니다.");
+                pendingYutResults.clear(); // 이 줄 추가 필요!
                 endTurnIfNoExtraTurn();
             }
         }

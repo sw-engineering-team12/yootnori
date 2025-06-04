@@ -66,11 +66,10 @@ public class TurnService {
             addToGameLog(players.get(currentTurnIndex).getName() + "의 추가 턴입니다.");
         }
 
-        // 디버깅: 턴 시작 시 모든 플레이어의 말 상태 출력
-        addToGameLog("[디버그] === 턴 시작 시 게임 상태 ===");
-        for (Player player : players) {
-            debugPrintPlayerPieces(player);
-        }
+//        // 디버깅: 턴 시작 시 모든 플레이어의 말 상태 출력
+//        for (Player player : players) {
+//            debugPrintPlayerPieces(player);
+//        }
     }
 
     /**
@@ -199,20 +198,10 @@ public class TurnService {
             return;
         }
 
-        addToGameLog("=== [디버그] " + player.getName() + "의 말 상태 ===");
         List<Piece> pieces = player.getPieces();
-        addToGameLog("총 말 개수: " + pieces.size());
 
         for (Piece piece : pieces) {
             Place currentPlace = piece.getCurrentPlace();
-            String locationInfo = currentPlace != null ?
-                    (currentPlace.getId() + " (" + currentPlace.getName() + ")") :
-                    "보드에 없음 (업힌 상태 또는 초기 상태)";
-
-            addToGameLog("말 " + piece.getId() + ":");
-            addToGameLog("  위치: " + locationInfo);
-            addToGameLog("  완주 여부: " + piece.isCompleted());
-            addToGameLog("  업힌 말 수: " + piece.getStackedPieces().size());
 
             if (!piece.getStackedPieces().isEmpty()) {
                 addToGameLog("  업힌 말 목록:");
